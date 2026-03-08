@@ -1,10 +1,12 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Settings, Activity, Mic, X } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Settings, Activity, Mic, X, Calendar, UserCog } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useRole } from '@/context/RoleContext';
 
 const navigation = [
   { name: 'Inicio', href: '/', icon: LayoutDashboard },
+  { name: 'Agenda', href: '/agenda', icon: Calendar },
   { name: 'Pacientes', href: '/patients', icon: Users },
   { name: 'Escalas Clínicas', href: '/scales', icon: Activity },
   { name: 'Dictado de Voz', href: '/dictation', icon: Mic },
@@ -18,6 +20,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
+  const { role, setRole } = useRole();
+
   return (
     <div className={cn(
       "fixed inset-y-0 left-0 z-30 w-64 transform bg-green-600 text-white transition-transform duration-300 ease-in-out lg:static lg:translate-x-0",
@@ -61,14 +65,30 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           </NavLink>
         ))}
       </nav>
+      
+      {/* Role Switcher for Demo */}
+      <div className="px-4 py-2">
+        <button
+          onClick={() => setRole(role === 'doctor' ? 'assistant' : 'doctor')}
+          className="w-full flex items-center justify-center px-4 py-2 border border-green-400 rounded-md shadow-sm text-sm font-medium text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+        >
+          <UserCog className="mr-2 h-4 w-4" />
+          {role === 'doctor' ? 'Cambiar a Asistente' : 'Cambiar a Doctor'}
+        </button>
+      </div>
+
       <div className="border-t border-green-500 p-4">
         <div className="flex items-center">
           <div className="h-9 w-9 rounded-full bg-green-700 flex items-center justify-center text-xs font-bold">
-            DR
+            {role === 'doctor' ? 'DR' : 'AS'}
           </div>
           <div className="ml-3">
-            <p className="text-sm font-medium text-white">Dr. Santiago</p>
-            <p className="text-xs text-green-100">Neurocirujano</p>
+            <p className="text-sm font-medium text-white">
+              {role === 'doctor' ? 'Dr. Santiago' : 'Asistente'}
+            </p>
+            <p className="text-xs text-green-100">
+              {role === 'doctor' ? 'Neurocirujano' : 'Gestión de Citas'}
+            </p>
           </div>
         </div>
       </div>

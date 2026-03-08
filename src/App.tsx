@@ -12,23 +12,30 @@ import { ClinicalScales } from './pages/ClinicalScales';
 import { Dictation } from './pages/Dictation';
 import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
-
+import { Agenda } from './pages/Agenda';
 import { PatientDetail } from './pages/PatientDetail';
+import { RoleProvider } from './context/RoleContext';
+import { NotificationProvider } from './context/NotificationContext';
 
 export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="patients" element={<Patients />} />
-          <Route path="patients/:id" element={<PatientDetail />} />
-          <Route path="scales" element={<ClinicalScales />} />
-          <Route path="dictation" element={<Dictation />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="settings" element={<Settings />} />
-        </Route>
-      </Routes>
-    </Router>
+    <RoleProvider>
+      <NotificationProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="patients" element={<Patients />} />
+              <Route path="patients/:id" element={<PatientDetail />} />
+              <Route path="agenda" element={<Agenda />} />
+              <Route path="scales" element={<ClinicalScales />} />
+              <Route path="dictation" element={<Dictation />} />
+              <Route path="reports" element={<Reports />} />
+              <Route path="settings" element={<Settings />} />
+            </Route>
+          </Routes>
+        </Router>
+      </NotificationProvider>
+    </RoleProvider>
   );
 }

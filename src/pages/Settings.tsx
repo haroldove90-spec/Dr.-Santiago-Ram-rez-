@@ -1,24 +1,32 @@
 import React, { useState } from 'react';
-import { User, Bell, Shield, Moon, Globe, Save } from 'lucide-react';
+import { User, Bell, Shield, Moon, Globe, Save, Clock, Calendar } from 'lucide-react';
+import { useNotification } from '@/context/NotificationContext';
 
 export function Settings() {
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
-  const [language, setLanguage] = useState('es');
+  const { addNotification } = useNotification();
+
+  // Reminder Settings State
+  const [reminderEnabled, setReminderEnabled] = useState(true);
+  const [reminderTimeValue, setReminderTimeValue] = useState(24);
+  const [reminderTimeUnit, setReminderTimeUnit] = useState('hours'); // 'minutes', 'hours', 'days'
 
   const handleSave = () => {
     // In a real app, this would save to backend or local storage
-    alert('Configuración guardada exitosamente.');
+    // For now, we simulate saving and show a notification
+    addNotification('Configuración Guardada', 'Sus preferencias han sido actualizadas exitosamente.');
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto pb-10">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Configuración</h1>
         <p className="text-sm text-slate-500">Administre sus preferencias y configuración de cuenta.</p>
       </div>
 
       <div className="bg-white shadow-sm border border-slate-200 rounded-xl overflow-hidden">
+        {/* Profile Section */}
         <div className="p-6 border-b border-slate-200">
           <h2 className="text-lg font-medium text-slate-900 flex items-center">
             <User className="h-5 w-5 mr-2 text-green-600" />
@@ -40,6 +48,61 @@ export function Settings() {
           </div>
         </div>
 
+        {/* Appointment Reminders Section */}
+        <div className="p-6 border-b border-slate-200 bg-slate-50/50">
+          <h2 className="text-lg font-medium text-slate-900 flex items-center mb-4">
+            <Clock className="h-5 w-5 mr-2 text-purple-600" />
+            Recordatorios de Citas
+          </h2>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Calendar className="h-5 w-5 text-slate-400 mr-3" />
+                <div>
+                  <p className="text-sm font-medium text-slate-900">Activar Recordatorios Automáticos</p>
+                  <p className="text-xs text-slate-500">Enviar alertas antes de cada cita programada.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setReminderEnabled(!reminderEnabled)}
+                className={`relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${reminderEnabled ? 'bg-green-600' : 'bg-slate-200'}`}
+              >
+                <span className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200 ${reminderEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+              </button>
+            </div>
+
+            {reminderEnabled && (
+              <div className="ml-8 p-4 bg-white border border-slate-200 rounded-lg animate-in fade-in slide-in-from-top-2 duration-300">
+                <label className="block text-sm font-medium text-slate-700 mb-2">Anticipación del Recordatorio</label>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-slate-500">Enviar recordatorio</span>
+                  <input
+                    type="number"
+                    min="1"
+                    value={reminderTimeValue}
+                    onChange={(e) => setReminderTimeValue(parseInt(e.target.value) || 1)}
+                    className="w-20 rounded-md border-slate-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm p-2 border"
+                  />
+                  <select
+                    value={reminderTimeUnit}
+                    onChange={(e) => setReminderTimeUnit(e.target.value)}
+                    className="rounded-md border-slate-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm p-2 border"
+                  >
+                    <option value="minutes">Minutos</option>
+                    <option value="hours">Horas</option>
+                    <option value="days">Días</option>
+                  </select>
+                  <span className="text-sm text-slate-500">antes de la cita.</span>
+                </div>
+                <p className="mt-2 text-xs text-slate-400">
+                  Ejemplo: Se enviará una notificación {reminderTimeValue} {reminderTimeUnit === 'minutes' ? 'minutos' : reminderTimeUnit === 'hours' ? 'horas' : 'días'} antes de la hora programada.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* General Preferences */}
         <div className="p-6 border-b border-slate-200">
           <h2 className="text-lg font-medium text-slate-900 flex items-center mb-4">
             <Globe className="h-5 w-5 mr-2 text-blue-600" />
@@ -50,8 +113,8 @@ export function Settings() {
               <div className="flex items-center">
                 <Bell className="h-5 w-5 text-slate-400 mr-3" />
                 <div>
-                  <p className="text-sm font-medium text-slate-900">Notificaciones</p>
-                  <p className="text-xs text-slate-500">Recibir alertas de pacientes críticos.</p>
+                  <p className="text-sm font-medium text-slate-900">Notificaciones del Sistema</p>
+                  <p className="text-xs text-slate-500">Recibir alertas de pacientes críticos y actualizaciones.</p>
                 </div>
               </div>
               <button

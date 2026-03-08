@@ -1,11 +1,45 @@
-import React from 'react';
-import { Bell, Search, Menu } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bell, Search, Menu, Download } from 'lucide-react';
+import { useNotification } from '@/context/NotificationContext';
+import { useRole } from '@/context/RoleContext';
 
 interface HeaderProps {
   onMenuClick: () => void;
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
+  const { notifications, requestPermission, permission } = useNotification();
+  const { role } = useRole();
+  const unreadCount = notifications.filter(n => !n.read).length;
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult: any) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        } else {
+          console.log('User dismissed the install prompt');
+        }
+        setDeferredPrompt(null);
+      });
+    }
+  };
+
   return (
     <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10">
       <div className="flex items-center flex-1">
@@ -27,9 +61,31 @@ export function Header({ onMenuClick }: HeaderProps) {
         </div>
       </div>
       <div className="flex items-center space-x-4">
-        <button className="p-2 text-slate-400 hover:text-slate-500 relative">
-          <Bell className="h-6 w-6" />
-          <span className="absolute top-1.5 right-1.5 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />
+        {role === 'assistant' && (
+          <span className="hidden md:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            Modo Asistente
+          </span>
+        )}
+        
+        {deferredPrompt && (
+          <button
+            onClick={handleInstallClick}
+            className="p-2 text-green-600 hover:text-green-700 bg-green-50 rounded-full transition-colors"
+            title="Instalar Aplicación"
+          >
+            <Download className="h-6 w-6" />
+          </button>
+        )}
+
+        <button 
+          onClick={requestPermission}
+          className="p-2 text-slate-400 hover:text-slate-500 relative"
+          title={permission === 'granted' ? 'Notificaciones Activas' : 'Activar Notificaciones'}
+        >
+          <Bell className={`h-6 w-6 ${permission === 'granted' ? 'text-slate-600' : 'text-slate-400'}`} />
+          {unreadCount > 0 && (
+            <span className="absolute top-1.5 right-1.5 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />
+          )}
         </button>
       </div>
     </header>
