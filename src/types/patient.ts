@@ -26,26 +26,58 @@ export interface ImagingStudy {
   dicomUrl?: string;
 }
 
+export interface GlasgowComaScale {
+  ocular: number; // 1-4
+  verbal: number | string; // 1-5 or '1T'
+  motor: number; // 1-6
+  total: number | string;
+}
+
 export interface NeurologicalExam {
-  mentalStatus?: string;
+  gcs?: GlasgowComaScale;
   cranialNerves?: string;
   motorSystem?: string;
   reflexes?: string;
   sensorySystem?: string;
   coordinationAndGait?: string;
-  meningealSigns?: string;
+  meningealSigns?: 'Ausentes' | 'Presentes' | 'Dudosos' | '';
 }
 
 export interface NeurologicalHistory {
+  // Perfil
+  advanceDirectives?: string;
+  
+  // Anamnesis
   chiefComplaint: string;
-  historyOfPresentIllness: string;
+  symptomOnset?: string;
+  evolution?: 'Aguda' | 'Subaguda' | 'Crónica' | 'Fluctuante' | '';
+  currentDeficit?: string;
   pastMedicalHistory: string | string[];
   surgicalHistory?: string;
   familyHistory: string | string[];
   allergies?: string;
   socialHistory: string;
+  
+  // Examen Físico
   generalExam?: string;
   neurologicalExam?: NeurologicalExam;
+  
+  // Imagenología (Resumen en historial, aunque hay un módulo aparte)
+  imagingType?: string[];
+  imagingDate?: string;
+  imagingFindings?: string;
+  imagingComparison?: string;
+  dicomUrl?: string;
+
+  // Planificación Quirúrgica
+  therapeuticDecision?: 'Tratamiento Médico' | 'Cirugía Electiva' | 'Cirugía de Urgencia' | 'Paliativo' | '';
+  proposedProcedure?: string;
+  surgicalRisk?: 'I' | 'II' | 'III' | 'IV' | 'V' | 'VI' | '';
+  outcomeScale?: string;
+  evolutionNotes?: string;
+
+  // Legacy fields (kept for compatibility)
+  historyOfPresentIllness?: string;
   assessment?: string;
   plan?: string;
 }

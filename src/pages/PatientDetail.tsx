@@ -33,21 +33,36 @@ export function PatientDetail() {
     phone: '',
     email: '',
     emergencyContact: '',
+    advanceDirectives: '',
     chiefComplaint: '',
-    historyOfPresentIllness: '',
+    symptomOnset: '',
+    evolution: '',
+    currentDeficit: '',
     pastMedicalHistory: '',
-    familyHistory: '',
-    socialHistory: '',
     surgicalHistory: '',
+    familyHistory: '',
     allergies: '',
+    socialHistory: '',
     generalExam: '',
-    mentalStatus: '',
+    gcsOcular: 4,
+    gcsVerbal: '5',
+    gcsMotor: 6,
     cranialNerves: '',
     motorSystem: '',
     reflexes: '',
     sensorySystem: '',
     coordinationAndGait: '',
     meningealSigns: '',
+    imagingType: [] as string[],
+    imagingDate: '',
+    imagingFindings: '',
+    imagingComparison: '',
+    dicomUrl: '',
+    therapeuticDecision: '',
+    proposedProcedure: '',
+    surgicalRisk: '',
+    outcomeScale: '',
+    evolutionNotes: '',
     assessment: '',
     plan: ''
   });
@@ -65,21 +80,36 @@ export function PatientDetail() {
           phone: foundPatient.contact.phone,
           email: foundPatient.contact.email,
           emergencyContact: foundPatient.contact.emergencyContact,
+          advanceDirectives: foundPatient.history.advanceDirectives || '',
           chiefComplaint: foundPatient.history.chiefComplaint,
-          historyOfPresentIllness: foundPatient.history.historyOfPresentIllness,
+          symptomOnset: foundPatient.history.symptomOnset || '',
+          evolution: foundPatient.history.evolution || '',
+          currentDeficit: foundPatient.history.currentDeficit || '',
           pastMedicalHistory: Array.isArray(foundPatient.history.pastMedicalHistory) ? foundPatient.history.pastMedicalHistory.join('\n') : foundPatient.history.pastMedicalHistory || '',
           familyHistory: Array.isArray(foundPatient.history.familyHistory) ? foundPatient.history.familyHistory.join('\n') : foundPatient.history.familyHistory || '',
           socialHistory: foundPatient.history.socialHistory,
           surgicalHistory: foundPatient.history.surgicalHistory || '',
           allergies: foundPatient.history.allergies || '',
           generalExam: foundPatient.history.generalExam || '',
-          mentalStatus: foundPatient.history.neurologicalExam?.mentalStatus || '',
+          gcsOcular: foundPatient.history.neurologicalExam?.gcs?.ocular || 4,
+          gcsVerbal: foundPatient.history.neurologicalExam?.gcs?.verbal || '5',
+          gcsMotor: foundPatient.history.neurologicalExam?.gcs?.motor || 6,
           cranialNerves: foundPatient.history.neurologicalExam?.cranialNerves || '',
           motorSystem: foundPatient.history.neurologicalExam?.motorSystem || '',
           reflexes: foundPatient.history.neurologicalExam?.reflexes || '',
           sensorySystem: foundPatient.history.neurologicalExam?.sensorySystem || '',
           coordinationAndGait: foundPatient.history.neurologicalExam?.coordinationAndGait || '',
           meningealSigns: foundPatient.history.neurologicalExam?.meningealSigns || '',
+          imagingType: foundPatient.history.imagingType || [],
+          imagingDate: foundPatient.history.imagingDate || '',
+          imagingFindings: foundPatient.history.imagingFindings || '',
+          imagingComparison: foundPatient.history.imagingComparison || '',
+          dicomUrl: foundPatient.history.dicomUrl || '',
+          therapeuticDecision: foundPatient.history.therapeuticDecision || '',
+          proposedProcedure: foundPatient.history.proposedProcedure || '',
+          surgicalRisk: foundPatient.history.surgicalRisk || '',
+          outcomeScale: foundPatient.history.outcomeScale || '',
+          evolutionNotes: foundPatient.history.evolutionNotes || '',
           assessment: foundPatient.history.assessment || '',
           plan: foundPatient.history.plan || ''
         });
@@ -115,8 +145,11 @@ export function PatientDetail() {
       },
       history: {
         ...patient.history,
+        advanceDirectives: editForm.advanceDirectives,
         chiefComplaint: editForm.chiefComplaint,
-        historyOfPresentIllness: editForm.historyOfPresentIllness,
+        symptomOnset: editForm.symptomOnset,
+        evolution: editForm.evolution as any,
+        currentDeficit: editForm.currentDeficit,
         pastMedicalHistory: editForm.pastMedicalHistory.split('\n').filter(item => item.trim() !== ''),
         familyHistory: editForm.familyHistory.split('\n').filter(item => item.trim() !== ''),
         socialHistory: editForm.socialHistory,
@@ -124,14 +157,29 @@ export function PatientDetail() {
         allergies: editForm.allergies,
         generalExam: editForm.generalExam,
         neurologicalExam: {
-          mentalStatus: editForm.mentalStatus,
+          gcs: {
+            ocular: Number(editForm.gcsOcular),
+            verbal: editForm.gcsVerbal,
+            motor: Number(editForm.gcsMotor),
+            total: (Number(editForm.gcsOcular) + (editForm.gcsVerbal === '1T' ? 1 : Number(editForm.gcsVerbal)) + Number(editForm.gcsMotor)) + (editForm.gcsVerbal === '1T' ? 'T' : '')
+          },
           cranialNerves: editForm.cranialNerves,
           motorSystem: editForm.motorSystem,
           reflexes: editForm.reflexes,
           sensorySystem: editForm.sensorySystem,
           coordinationAndGait: editForm.coordinationAndGait,
-          meningealSigns: editForm.meningealSigns,
+          meningealSigns: editForm.meningealSigns as any,
         },
+        imagingType: editForm.imagingType,
+        imagingDate: editForm.imagingDate,
+        imagingFindings: editForm.imagingFindings,
+        imagingComparison: editForm.imagingComparison,
+        dicomUrl: editForm.dicomUrl,
+        therapeuticDecision: editForm.therapeuticDecision as any,
+        proposedProcedure: editForm.proposedProcedure,
+        surgicalRisk: editForm.surgicalRisk as any,
+        outcomeScale: editForm.outcomeScale,
+        evolutionNotes: editForm.evolutionNotes,
         assessment: editForm.assessment,
         plan: editForm.plan
       }
@@ -188,13 +236,14 @@ export function PatientDetail() {
     doc.text(splitComplaint, margin, yPos);
     yPos += splitComplaint.length * 15 + 10;
 
-    // Enfermedad Actual
+    // Enfermedad Actual / Evolución
     checkPageBreak(2);
     doc.setFont('helvetica', 'bold');
-    doc.text('Enfermedad Actual:', margin, yPos);
+    doc.text('Evolución y Déficit Actual:', margin, yPos);
     yPos += 15;
     doc.setFont('helvetica', 'normal');
-    const splitIllness = doc.splitTextToSize(patient.history.historyOfPresentIllness || 'No registrado', 612 - 2 * margin);
+    const evolutionText = `Inicio: ${patient.history.symptomOnset ? format(new Date(patient.history.symptomOnset), 'dd/MM/yyyy') : 'N/A'} | Tipo: ${patient.history.evolution || 'N/A'}\nDéficit: ${patient.history.currentDeficit || 'No registrado'}`;
+    const splitIllness = doc.splitTextToSize(evolutionText, 612 - 2 * margin);
     checkPageBreak(splitIllness.length);
     doc.text(splitIllness, margin, yPos);
     yPos += splitIllness.length * 15 + 10;
@@ -269,8 +318,10 @@ export function PatientDetail() {
     doc.setFont('helvetica', 'normal');
     
     const neuroExam = patient.history.neurologicalExam || {};
+    const gcsText = neuroExam.gcs ? `Ocular: ${neuroExam.gcs.ocular}, Verbal: ${neuroExam.gcs.verbal}, Motora: ${neuroExam.gcs.motor} (Total: ${neuroExam.gcs.total})` : 'No evaluado';
+    
     const neuroFields = [
-      { label: 'Estado Mental:', value: neuroExam.mentalStatus },
+      { label: 'Escala de Glasgow:', value: gcsText },
       { label: 'Pares Craneales:', value: neuroExam.cranialNerves },
       { label: 'Sistema Motor:', value: neuroExam.motorSystem },
       { label: 'Reflejos:', value: neuroExam.reflexes },
@@ -314,6 +365,20 @@ export function PatientDetail() {
     const splitPlan = doc.splitTextToSize(patient.history.plan || 'No registrado', 612 - 2 * margin);
     checkPageBreak(splitPlan.length);
     doc.text(splitPlan, margin, yPos);
+
+    // Planificación Quirúrgica
+    if (patient.history.therapeuticDecision || patient.history.proposedProcedure) {
+      checkPageBreak(3);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Planificación Quirúrgica:', margin, yPos);
+      yPos += 15;
+      doc.setFont('helvetica', 'normal');
+      const surgPlan = `Decisión: ${patient.history.therapeuticDecision || 'N/A'} | Riesgo ASA: ${patient.history.surgicalRisk || 'N/A'}\nProcedimiento: ${patient.history.proposedProcedure || 'N/A'}`;
+      const splitSurgPlan = doc.splitTextToSize(surgPlan, 612 - 2 * margin);
+      checkPageBreak(splitSurgPlan.length);
+      doc.text(splitSurgPlan, margin, yPos);
+      yPos += splitSurgPlan.length * 15 + 10;
+    }
 
     // Save PDF
     doc.save(`Historial_${patient.lastName}_${patient.firstName}.pdf`);
@@ -394,10 +459,19 @@ export function PatientDetail() {
             </div>
           ) : (
             <button 
-              onClick={() => setIsEditing(true)}
-              className="inline-flex items-center px-3 py-2 border border-slate-300 shadow-sm text-sm leading-4 font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none"
+              onClick={() => {
+                setActiveTab('history');
+                setIsEditing(true);
+              }}
+              className={cn(
+                "inline-flex items-center px-3 py-2 border shadow-sm text-sm leading-4 font-medium rounded-md focus:outline-none",
+                (!patient.history.chiefComplaint && !patient.history.assessment)
+                  ? "border-transparent text-white bg-[#215732] hover:bg-[#1a4528]"
+                  : "border-slate-300 text-slate-700 bg-white hover:bg-slate-50"
+              )}
             >
-              <Edit2 className="w-4 h-4 mr-2" /> Editar Información
+              <Edit2 className="w-4 h-4 mr-2" /> 
+              {(!patient.history.chiefComplaint && !patient.history.assessment) ? 'Registrar Historial Clínico' : 'Editar Expediente'}
             </button>
           )}
         </div>
@@ -502,26 +576,104 @@ export function PatientDetail() {
           {activeTab === 'history' && (
              <div className="bg-white shadow-sm rounded-xl p-6 border border-slate-200 space-y-8">
                
-               {/* Antecedentes */}
+               {/* 1. Perfil del Paciente */}
                <div>
-                 <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Antecedentes</h3>
+                 <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">1. Perfil del Paciente</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div className="col-span-1 md:col-span-2">
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Directivas Anticipadas (Voluntad Anticipada)</h4>
+                     {isEditing ? (
+                       <textarea
+                         className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
+                         rows={2}
+                         value={editForm.advanceDirectives}
+                         onChange={(e) => setEditForm({...editForm, advanceDirectives: e.target.value})}
+                         placeholder="Instrucciones previas, RCP, intubación..."
+                       />
+                     ) : (
+                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.advanceDirectives || <span className="italic text-slate-400">No registradas</span>}</p>
+                     )}
+                   </div>
+                 </div>
+               </div>
+
+               {/* 2. Anamnesis Neurológica */}
+               <div>
+                 <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">2. Anamnesis Neurológica</h3>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div className="col-span-1 md:col-span-2">
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Motivo de Consulta</h4>
+                     {isEditing ? (
+                       <textarea
+                         className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
+                         rows={2}
+                         value={editForm.chiefComplaint}
+                         onChange={(e) => setEditForm({...editForm, chiefComplaint: e.target.value})}
+                       />
+                     ) : (
+                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.chiefComplaint || <span className="italic text-slate-400">No registrado</span>}</p>
+                     )}
+                   </div>
                    <div>
-                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Patológicos</h4>
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Fecha de Inicio de Síntomas</h4>
+                     {isEditing ? (
+                       <input
+                         type="date"
+                         className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
+                         value={editForm.symptomOnset}
+                         onChange={(e) => setEditForm({...editForm, symptomOnset: e.target.value})}
+                       />
+                     ) : (
+                       <p className="text-sm text-slate-600">{patient.history.symptomOnset ? format(new Date(patient.history.symptomOnset), 'd MMM, yyyy', { locale: es }) : <span className="italic text-slate-400">No registrada</span>}</p>
+                     )}
+                   </div>
+                   <div>
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Evolución del Cuadro</h4>
+                     {isEditing ? (
+                       <select
+                         className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
+                         value={editForm.evolution}
+                         onChange={(e) => setEditForm({...editForm, evolution: e.target.value})}
+                       >
+                         <option value="">Seleccionar...</option>
+                         <option value="Aguda">Aguda</option>
+                         <option value="Subaguda">Subaguda</option>
+                         <option value="Crónica">Crónica</option>
+                         <option value="Fluctuante">Fluctuante</option>
+                       </select>
+                     ) : (
+                       <p className="text-sm text-slate-600">{patient.history.evolution || <span className="italic text-slate-400">No registrada</span>}</p>
+                     )}
+                   </div>
+                   <div className="col-span-1 md:col-span-2">
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Déficit Neurológico Actual</h4>
+                     {isEditing ? (
+                       <textarea
+                         className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
+                         rows={2}
+                         value={editForm.currentDeficit}
+                         onChange={(e) => setEditForm({...editForm, currentDeficit: e.target.value})}
+                       />
+                     ) : (
+                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.currentDeficit || <span className="italic text-slate-400">No registrado</span>}</p>
+                     )}
+                   </div>
+                   <div>
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Antecedentes Patológicos</h4>
                      {isEditing ? (
                        <textarea
                          className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
                          rows={3}
                          value={editForm.pastMedicalHistory}
                          onChange={(e) => setEditForm({...editForm, pastMedicalHistory: e.target.value})}
-                         placeholder="Ej. Hipertensión, Diabetes..."
+                         placeholder="Ej. HTA, DM2, Epilepsia..."
                        />
                      ) : (
-                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.pastMedicalHistory || <span className="italic text-slate-400">Sin antecedentes registrados</span>}</p>
+                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.pastMedicalHistory || <span className="italic text-slate-400">Sin antecedentes</span>}</p>
                      )}
                    </div>
                    <div>
-                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Quirúrgicos / Traumáticos</h4>
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Antecedentes Quirúrgicos</h4>
                      {isEditing ? (
                        <textarea
                          className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
@@ -531,27 +683,26 @@ export function PatientDetail() {
                          placeholder="Cirugías previas, TCE..."
                        />
                      ) : (
-                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.surgicalHistory || <span className="italic text-slate-400">Sin antecedentes registrados</span>}</p>
+                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.surgicalHistory || <span className="italic text-slate-400">Sin antecedentes</span>}</p>
                      )}
                    </div>
                    <div>
-                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Familiares</h4>
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Antecedentes Familiares</h4>
                      {isEditing ? (
                        <textarea
                          className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
-                         rows={3}
+                         rows={2}
                          value={editForm.familyHistory}
                          onChange={(e) => setEditForm({...editForm, familyHistory: e.target.value})}
-                         placeholder="Enfermedades hereditarias..."
                        />
                      ) : (
-                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.familyHistory || <span className="italic text-slate-400">Sin antecedentes registrados</span>}</p>
+                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.familyHistory || <span className="italic text-slate-400">Sin antecedentes</span>}</p>
                      )}
                    </div>
                    <div>
                      <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Tóxico-Alérgicos / Sociales</h4>
                      {isEditing ? (
-                       <div className="space-y-3">
+                       <div className="space-y-2">
                          <input
                            type="text"
                            className="block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
@@ -561,10 +712,10 @@ export function PatientDetail() {
                          />
                          <textarea
                            className="block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
-                           rows={2}
+                           rows={1}
                            value={editForm.socialHistory}
                            onChange={(e) => setEditForm({...editForm, socialHistory: e.target.value})}
-                           placeholder="Tabaquismo, alcohol, drogas..."
+                           placeholder="Tabaquismo, alcohol..."
                          />
                        </div>
                      ) : (
@@ -577,40 +728,78 @@ export function PatientDetail() {
                  </div>
                </div>
 
-               {/* Examen Físico y Neurológico */}
+               {/* 3. Examen Físico Neurológico */}
                <div>
-                 <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Examen Físico y Neurológico</h3>
+                 <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">3. Examen Físico Neurológico</h3>
                  <div className="space-y-6">
-                   <div>
-                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Examen General</h4>
-                     {isEditing ? (
-                       <textarea
-                         className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
-                         rows={2}
-                         value={editForm.generalExam}
-                         onChange={(e) => setEditForm({...editForm, generalExam: e.target.value})}
-                         placeholder="Signos vitales, aspecto general..."
-                       />
-                     ) : (
-                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.generalExam || <span className="italic text-slate-400">No registrado</span>}</p>
-                     )}
-                   </div>
                    
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-100">
-                     <div className="col-span-1 md:col-span-2">
-                       <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-2">Examen Neurológico</h4>
+                   {/* Escala de Glasgow */}
+                   <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                     <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4">Escala de Coma de Glasgow (GCS)</h4>
+                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                       <div>
+                         <label className="block text-xs font-medium text-slate-700 mb-1">Apertura Ocular (O)</label>
+                         {isEditing ? (
+                           <select 
+                             className="w-full border border-slate-300 rounded p-2 text-sm"
+                             value={editForm.gcsOcular}
+                             onChange={(e) => setEditForm({...editForm, gcsOcular: Number(e.target.value)})}
+                           >
+                             {[1,2,3,4].map(v => <option key={`o-${v}`} value={v}>{v}</option>)}
+                           </select>
+                         ) : (
+                           <p className="text-sm font-medium">{patient.history.neurologicalExam?.gcs?.ocular || 4}</p>
+                         )}
+                       </div>
+                       <div>
+                         <label className="block text-xs font-medium text-slate-700 mb-1">Respuesta Verbal (V)</label>
+                         {isEditing ? (
+                           <select 
+                             className="w-full border border-slate-300 rounded p-2 text-sm"
+                             value={editForm.gcsVerbal}
+                             onChange={(e) => setEditForm({...editForm, gcsVerbal: e.target.value})}
+                           >
+                             {[1,2,3,4,5].map(v => <option key={`v-${v}`} value={v}>{v}</option>)}
+                             <option value="1T">1T (Intubado)</option>
+                           </select>
+                         ) : (
+                           <p className="text-sm font-medium">{patient.history.neurologicalExam?.gcs?.verbal || 5}</p>
+                         )}
+                       </div>
+                       <div>
+                         <label className="block text-xs font-medium text-slate-700 mb-1">Respuesta Motora (M)</label>
+                         {isEditing ? (
+                           <select 
+                             className="w-full border border-slate-300 rounded p-2 text-sm"
+                             value={editForm.gcsMotor}
+                             onChange={(e) => setEditForm({...editForm, gcsMotor: Number(e.target.value)})}
+                           >
+                             {[1,2,3,4,5,6].map(v => <option key={`m-${v}`} value={v}>{v}</option>)}
+                           </select>
+                         ) : (
+                           <p className="text-sm font-medium">{patient.history.neurologicalExam?.gcs?.motor || 6}</p>
+                         )}
+                       </div>
+                       <div className="bg-white border border-slate-200 rounded p-2 flex flex-col justify-center items-center">
+                         <label className="block text-xs font-medium text-slate-500 mb-1">Puntuación Total</label>
+                         <p className="text-xl font-bold text-[#215732]">
+                           {isEditing 
+                             ? `${Number(editForm.gcsOcular) + (editForm.gcsVerbal === '1T' ? 1 : Number(editForm.gcsVerbal)) + Number(editForm.gcsMotor)}${editForm.gcsVerbal === '1T' ? 'T' : ''}`
+                             : patient.history.neurologicalExam?.gcs?.total || 15}
+                         </p>
+                       </div>
                      </div>
-                     
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      {[
-                       { key: 'mentalStatus', label: 'Estado Mental' },
-                       { key: 'cranialNerves', label: 'Pares Craneales' },
-                       { key: 'motorSystem', label: 'Sistema Motor' },
-                       { key: 'reflexes', label: 'Reflejos' },
+                       { key: 'cranialNerves', label: 'Pares Craneales (I-XII)' },
+                       { key: 'motorSystem', label: 'Fuerza Motora (Escala Daniels)' },
+                       { key: 'reflexes', label: 'Reflejos Osteotendinosos' },
                        { key: 'sensorySystem', label: 'Sistema Sensitivo' },
                        { key: 'coordinationAndGait', label: 'Coordinación y Marcha' },
-                       { key: 'meningealSigns', label: 'Signos Meníngeos' },
                      ].map((field) => (
-                       <div key={field.key} className={field.key === 'mentalStatus' ? 'col-span-1 md:col-span-2' : ''}>
+                       <div key={field.key}>
                          <label className="block text-xs font-medium text-slate-700 mb-1">{field.label}</label>
                          {isEditing ? (
                            <textarea
@@ -620,46 +809,161 @@ export function PatientDetail() {
                              onChange={(e) => setEditForm({...editForm, [field.key]: e.target.value})}
                            />
                          ) : (
-                           <p className="text-sm text-slate-600 bg-white p-2 rounded border border-slate-200 min-h-[2.5rem]">
+                           <p className="text-sm text-slate-600 bg-slate-50 p-2 rounded border border-slate-100 min-h-[2.5rem]">
                              {(patient.history.neurologicalExam as any)?.[field.key] || <span className="italic text-slate-400">Normal / No evaluado</span>}
                            </p>
                          )}
                        </div>
                      ))}
+                     <div>
+                       <label className="block text-xs font-medium text-slate-700 mb-1">Signos Meníngeos</label>
+                       {isEditing ? (
+                         <select 
+                           className="w-full border border-slate-300 rounded p-2 text-sm"
+                           value={editForm.meningealSigns}
+                           onChange={(e) => setEditForm({...editForm, meningealSigns: e.target.value})}
+                         >
+                           <option value="">Seleccionar...</option>
+                           <option value="Ausentes">Ausentes</option>
+                           <option value="Presentes">Presentes</option>
+                           <option value="Dudosos">Dudosos</option>
+                         </select>
+                       ) : (
+                         <p className="text-sm text-slate-600 bg-slate-50 p-2 rounded border border-slate-100 min-h-[2.5rem]">
+                           {patient.history.neurologicalExam?.meningealSigns || <span className="italic text-slate-400">No evaluado</span>}
+                         </p>
+                       )}
+                     </div>
                    </div>
                  </div>
                </div>
 
-               {/* Diagnóstico y Plan */}
+               {/* 4. Módulo de Imagenología */}
                <div>
-                 <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Diagnóstico y Plan</h3>
+                 <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">4. Módulo de Imagenología</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div>
-                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Impresión Diagnóstica</h4>
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Tipo de Estudio</h4>
                      {isEditing ? (
-                       <textarea
+                       <input
+                         type="text"
                          className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
-                         rows={4}
-                         value={editForm.assessment}
-                         onChange={(e) => setEditForm({...editForm, assessment: e.target.value})}
-                         placeholder="Diagnósticos sindromáticos, topográficos, etiológicos..."
+                         value={editForm.imagingType.join(', ')}
+                         onChange={(e) => setEditForm({...editForm, imagingType: e.target.value.split(',').map(s => s.trim())})}
+                         placeholder="TAC Simple, RM Cerebral..."
                        />
                      ) : (
-                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.assessment || <span className="italic text-slate-400">No registrado</span>}</p>
+                       <p className="text-sm text-slate-600">{patient.history.imagingType?.join(', ') || <span className="italic text-slate-400">No registrado</span>}</p>
                      )}
                    </div>
                    <div>
-                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Plan de Manejo</h4>
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Fecha del Estudio</h4>
+                     {isEditing ? (
+                       <input
+                         type="date"
+                         className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
+                         value={editForm.imagingDate}
+                         onChange={(e) => setEditForm({...editForm, imagingDate: e.target.value})}
+                       />
+                     ) : (
+                       <p className="text-sm text-slate-600">{patient.history.imagingDate ? format(new Date(patient.history.imagingDate), 'd MMM, yyyy', { locale: es }) : <span className="italic text-slate-400">No registrada</span>}</p>
+                     )}
+                   </div>
+                   <div className="col-span-1 md:col-span-2">
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Hallazgos Clave</h4>
+                     {isEditing ? (
+                       <textarea
+                         className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
+                         rows={2}
+                         value={editForm.imagingFindings}
+                         onChange={(e) => setEditForm({...editForm, imagingFindings: e.target.value})}
+                       />
+                     ) : (
+                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.imagingFindings || <span className="italic text-slate-400">No registrado</span>}</p>
+                     )}
+                   </div>
+                   <div className="col-span-1 md:col-span-2">
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Comparativa con previos</h4>
+                     {isEditing ? (
+                       <textarea
+                         className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
+                         rows={2}
+                         value={editForm.imagingComparison}
+                         onChange={(e) => setEditForm({...editForm, imagingComparison: e.target.value})}
+                       />
+                     ) : (
+                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.imagingComparison || <span className="italic text-slate-400">No registrado</span>}</p>
+                     )}
+                   </div>
+                 </div>
+               </div>
+
+               {/* 5. Planificación Quirúrgica y Seguimiento */}
+               <div>
+                 <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">5. Planificación Quirúrgica y Seguimiento</h3>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div>
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Decisión Terapéutica</h4>
+                     {isEditing ? (
+                       <select
+                         className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
+                         value={editForm.therapeuticDecision}
+                         onChange={(e) => setEditForm({...editForm, therapeuticDecision: e.target.value})}
+                       >
+                         <option value="">Seleccionar...</option>
+                         <option value="Tratamiento Médico">Tratamiento Médico</option>
+                         <option value="Cirugía Electiva">Cirugía Electiva</option>
+                         <option value="Cirugía de Urgencia">Cirugía de Urgencia</option>
+                         <option value="Paliativo">Paliativo</option>
+                       </select>
+                     ) : (
+                       <p className="text-sm text-slate-600">{patient.history.therapeuticDecision || <span className="italic text-slate-400">No registrada</span>}</p>
+                     )}
+                   </div>
+                   <div>
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Riesgo Quirúrgico (ASA)</h4>
+                     {isEditing ? (
+                       <select
+                         className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
+                         value={editForm.surgicalRisk}
+                         onChange={(e) => setEditForm({...editForm, surgicalRisk: e.target.value})}
+                       >
+                         <option value="">Seleccionar...</option>
+                         <option value="I">I</option>
+                         <option value="II">II</option>
+                         <option value="III">III</option>
+                         <option value="IV">IV</option>
+                         <option value="V">V</option>
+                         <option value="VI">VI</option>
+                       </select>
+                     ) : (
+                       <p className="text-sm text-slate-600">{patient.history.surgicalRisk || <span className="italic text-slate-400">No registrado</span>}</p>
+                     )}
+                   </div>
+                   <div className="col-span-1 md:col-span-2">
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Procedimiento Quirúrgico Propuesto</h4>
+                     {isEditing ? (
+                       <input
+                         type="text"
+                         className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
+                         value={editForm.proposedProcedure}
+                         onChange={(e) => setEditForm({...editForm, proposedProcedure: e.target.value})}
+                       />
+                     ) : (
+                       <p className="text-sm text-slate-600">{patient.history.proposedProcedure || <span className="italic text-slate-400">No registrado</span>}</p>
+                     )}
+                   </div>
+                   <div className="col-span-1 md:col-span-2">
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Notas de Evolución Postoperatoria</h4>
                      {isEditing ? (
                        <textarea
                          className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
                          rows={4}
-                         value={editForm.plan}
-                         onChange={(e) => setEditForm({...editForm, plan: e.target.value})}
-                         placeholder="Estudios solicitados, tratamiento, recomendaciones..."
+                         value={editForm.evolutionNotes}
+                         onChange={(e) => setEditForm({...editForm, evolutionNotes: e.target.value})}
                        />
                      ) : (
-                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.plan || <span className="italic text-slate-400">No registrado</span>}</p>
+                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.evolutionNotes || <span className="italic text-slate-400">No registrado</span>}</p>
                      )}
                    </div>
                  </div>
