@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { useNotification } from '../context/NotificationContext';
-import { Calendar, Clock, User, Plus, Check, X, MoreVertical, DollarSign } from 'lucide-react';
+import { usePatients } from '../context/PatientContext';
+import { Calendar, Clock, User, Plus, Check, X, MoreVertical, DollarSign, AlertCircle, Search } from 'lucide-react';
 import { format, addDays, startOfWeek, addHours } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface Appointment {
   id: string;
+  patientId: string;
   patientName: string;
   date: Date;
   type: string;
@@ -17,13 +20,24 @@ interface Appointment {
 export function Agenda() {
   const { role } = useRole();
   const { addNotification } = useNotification();
-  const [appointments, setAppointments] = useState<Appointment[]>([
-    { id: '1', patientName: 'Maria Garcia', date: addHours(new Date(), 2), type: 'Consulta Inicial', cost: 800, status: 'scheduled' },
-    { id: '2', patientName: 'Jose Rodriguez', date: addDays(new Date(), 1), type: 'Seguimiento', cost: 500, status: 'confirmed' },
-  ]);
+  const { patients, getPatientById } = usePatients();
+  const navigate = useNavigate();
+  
+  // Initialize with some mock appointments linked to the first mock patient if available
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    if (patients.length > 0 && appointments.length === 0) {
+      setAppointments([
+        { id: '1', patientId: patients[0].id, patientName: `${patients[0].firstName} ${patients[0].lastName}`, date: addHours(new Date(), 2), type: 'Consulta Inicial', cost: 800, status: 'scheduled' },
+        { id: '2', patientId: patients[1]?.id || patients[0].id, patientName: patients[1] ? `${patients[1].firstName} ${patients[1].lastName}` : `${patients[0].firstName} ${patients[0].lastName}`, date: addDays(new Date(), 1), type: 'Seguimiento', cost: 500, status: 'confirmed' },
+      ]);
+    }
+  }, [patients]);
 
   const [newAppointment, setNewAppointment] = useState({
-    patientName: '',
+    patientId: '',
     date: '',
     time: '',
     type: 'Consulta General',
@@ -31,15 +45,20 @@ export function Agenda() {
   });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [historyModal, setHistoryModal] = useState<{isOpen: boolean, patientId: string, patientName: string}>({ isOpen: false, patientId: '', patientName: '' });
 
   const handleAddAppointment = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAppointment.patientName || !newAppointment.date || !newAppointment.time) return;
+    if (!newAppointment.patientId || !newAppointment.date || !newAppointment.time) return;
+
+    const patient = getPatientById(newAppointment.patientId);
+    if (!patient) return;
 
     const date = new Date(`${newAppointment.date}T${newAppointment.time}`);
     const appointment: Appointment = {
       id: Date.now().toString(),
-      patientName: newAppointment.patientName,
+      patientId: patient.id,
+      patientName: `${patient.lastName}, ${patient.firstName}`,
       date: date,
       type: newAppointment.type,
       cost: Number(newAppointment.cost) || 0,
@@ -49,7 +68,7 @@ export function Agenda() {
     setAppointments([...appointments, appointment]);
     addNotification('Nueva Cita Agendada', `Cita para ${appointment.patientName} el ${format(date, 'dd/MM/yyyy HH:mm')}`);
     
-    setNewAppointment({ patientName: '', date: '', time: '', type: 'Consulta General', cost: '' });
+    setNewAppointment({ patientId: '', date: '', time: '', type: 'Consulta General', cost: '' });
     setIsModalOpen(false);
   };
 
@@ -77,9 +96,33 @@ export function Agenda() {
     }
   };
 
+  const handlePatientClick = (patientId: string, patientName: string) => {
+    const patient = getPatientById(patientId);
+    if (!patient) return;
+
+    // Check if patient has history
+    const hasHistory = patient.history.chiefComplaint || patient.history.historyOfPresentIllness || patient.history.pastMedicalHistory.length > 0;
+
+    if (!hasHistory) {
+      setHistoryModal({ isOpen: true, patientId, patientName });
+    } else {
+      navigate(`/patients/${patientId}`);
+    }
+  };
+
+  const handleCreateHistory = () => {
+    navigate(`/patients/${historyModal.patientId}`, { state: { editMode: true, tab: 'overview' } });
+    setHistoryModal({ isOpen: false, patientId: '', patientName: '' });
+  };
+
+  const filteredAppointments = appointments.filter(apt => 
+    apt.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    apt.type.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Agenda de Citas</h1>
           <p className="text-sm text-slate-500">Gestión de citas y horarios.</p>
@@ -100,6 +143,20 @@ export function Agenda() {
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div className="relative max-w-md">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search className="h-5 w-5 text-slate-400" />
+        </div>
+        <input
+          type="text"
+          className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md leading-5 bg-white placeholder-slate-500 focus:outline-none focus:placeholder-slate-400 focus:ring-1 focus:ring-[#215732] focus:border-[#215732] sm:text-sm transition duration-150 ease-in-out"
+          placeholder="Buscar cita por paciente o tipo..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
       <div className="grid grid-cols-1 gap-6">
         {/* Calendar View (Simplified) */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
@@ -108,14 +165,17 @@ export function Agenda() {
             Próximas Citas
           </h2>
           <div className="space-y-4">
-            {appointments.map((apt) => (
+            {filteredAppointments.map((apt) => (
               <div key={apt.id} className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border transition-colors ${apt.status === 'cancelled' ? 'bg-slate-50 opacity-75' : 'bg-white hover:border-[#215732]/50'} border-slate-200`}>
-                <div className="flex items-center space-x-4 mb-4 sm:mb-0">
+                <div 
+                  className="flex items-center space-x-4 mb-4 sm:mb-0 cursor-pointer hover:bg-slate-50 p-2 rounded-lg -ml-2"
+                  onClick={() => handlePatientClick(apt.patientId, apt.patientName)}
+                >
                   <div className={`p-2 rounded-full ${apt.status === 'cancelled' ? 'bg-slate-200 text-slate-500' : 'bg-[#215732]/10 text-[#215732]'}`}>
                     <User className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className={`font-medium ${apt.status === 'cancelled' ? 'text-slate-500 line-through' : 'text-slate-900'}`}>{apt.patientName}</p>
+                    <p className={`font-medium hover:text-[#215732] hover:underline ${apt.status === 'cancelled' ? 'text-slate-500 line-through' : 'text-slate-900'}`}>{apt.patientName}</p>
                     <p className="text-sm text-slate-500">{apt.type}</p>
                   </div>
                 </div>
@@ -162,8 +222,10 @@ export function Agenda() {
                 </div>
               </div>
             ))}
-            {appointments.length === 0 && (
-              <p className="text-slate-500 text-center py-8">No hay citas programadas.</p>
+            {filteredAppointments.length === 0 && (
+              <p className="text-slate-500 text-center py-8">
+                {searchTerm ? 'No se encontraron citas que coincidan con la búsqueda.' : 'No hay citas programadas.'}
+              </p>
             )}
           </div>
         </div>
@@ -172,12 +234,10 @@ export function Agenda() {
       {/* Add Appointment Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={() => setIsModalOpen(false)}></div>
+          <div className="flex min-h-screen items-center justify-center p-4 text-center">
+            <div className="fixed inset-0 bg-slate-900/50 transition-opacity" aria-hidden="true" onClick={() => setIsModalOpen(false)}></div>
 
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+            <div className="relative w-full max-w-lg transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
               <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg leading-6 font-medium text-slate-900" id="modal-title">
@@ -191,14 +251,17 @@ export function Agenda() {
                 <form onSubmit={handleAddAppointment} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700">Paciente</label>
-                    <input
-                      type="text"
+                    <select
                       required
-                      className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-[#215732] focus:ring-[#215732] sm:text-sm p-2 border"
-                      value={newAppointment.patientName}
-                      onChange={e => setNewAppointment({...newAppointment, patientName: e.target.value})}
-                      placeholder="Nombre del paciente"
-                    />
+                      className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-[#215732] focus:ring-[#215732] sm:text-sm p-2 border bg-white"
+                      value={newAppointment.patientId}
+                      onChange={e => setNewAppointment({...newAppointment, patientId: e.target.value})}
+                    >
+                      <option value="">Seleccione un paciente</option>
+                      {patients.map(p => (
+                        <option key={p.id} value={p.id}>{p.lastName}, {p.firstName} (HC: {p.mrn})</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -260,6 +323,51 @@ export function Agenda() {
                     Agendar Cita
                   </button>
                 </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* No History Notification Modal */}
+      {historyModal.isOpen && (
+        <div className="fixed inset-0 z-[110] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+          <div className="flex min-h-screen items-center justify-center p-4 text-center">
+            <div className="fixed inset-0 bg-slate-900/50 transition-opacity" aria-hidden="true" onClick={() => setHistoryModal({ isOpen: false, patientId: '', patientName: '' })}></div>
+
+            <div className="relative w-full max-w-lg transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <AlertCircle className="h-6 w-6 text-amber-600" aria-hidden="true" />
+                  </div>
+                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3 className="text-lg leading-6 font-medium text-slate-900" id="modal-title">
+                      Paciente sin Historial Clínico
+                    </h3>
+                    <div className="mt-2">
+                      <p className="text-sm text-slate-500">
+                        El paciente <strong>{historyModal.patientName}</strong> es nuevo y aún no tiene un historial clínico registrado. ¿Desea agregar su nuevo historial clínico ahora?
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-slate-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button
+                  type="button"
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#215732] text-base font-medium text-white hover:bg-[#1a4528] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#215732] sm:ml-3 sm:w-auto sm:text-sm"
+                  onClick={handleCreateHistory}
+                >
+                  Agregar Historial
+                </button>
+                <button
+                  type="button"
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-slate-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#215732] sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  onClick={() => setHistoryModal({ isOpen: false, patientId: '', patientName: '' })}
+                >
+                  Cancelar
+                </button>
               </div>
             </div>
           </div>

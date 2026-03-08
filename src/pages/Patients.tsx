@@ -1,38 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Plus, User, Calendar, ChevronRight, X, Save } from 'lucide-react';
 import { Patient } from '@/types/patient';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useNotification } from '@/context/NotificationContext';
-
-// Mock data for fallback
-const MOCK_PATIENTS: Patient[] = [
-  {
-    id: '1',
-    firstName: 'Maria',
-    lastName: 'Garcia',
-    dateOfBirth: '1985-04-12',
-    gender: 'female',
-    mrn: 'HC-2024-001',
-    lastVisit: '2024-03-01',
-    status: 'active'
-  },
-  {
-    id: '2',
-    firstName: 'Jose',
-    lastName: 'Rodriguez',
-    dateOfBirth: '1978-09-23',
-    gender: 'male',
-    mrn: 'HC-2024-002',
-    lastVisit: '2024-02-15',
-    status: 'active'
-  }
-];
+import { usePatients } from '@/context/PatientContext';
 
 export function Patients() {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { patients, addPatient } = usePatients();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { addNotification } = useNotification();
@@ -48,25 +24,6 @@ export function Patients() {
     phone: ''
   });
 
-  useEffect(() => {
-    const fetchPatients = async () => {
-      try {
-        // Try to fetch from API, fallback to mock
-        const response = await fetch('/api/patients');
-        if (!response.ok) throw new Error('Failed to fetch patients');
-        const data = await response.json();
-        setPatients(data);
-      } catch (error) {
-        console.log('Using mock data for patients');
-        setPatients(MOCK_PATIENTS);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPatients();
-  }, []);
-
   const handleAddPatient = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -78,10 +35,26 @@ export function Patients() {
       gender: newPatient.gender as 'male' | 'female' | 'other',
       mrn: newPatient.mrn || `HC-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000)}`,
       lastVisit: new Date().toISOString(),
-      status: 'active'
+      status: 'active',
+      contact: {
+        phone: newPatient.phone,
+        email: newPatient.email,
+        emergencyContact: ''
+      },
+      history: {
+        chiefComplaint: '',
+        historyOfPresentIllness: '',
+        pastMedicalHistory: [],
+        familyHistory: [],
+        socialHistory: ''
+      },
+      medications: [],
+      clinicalScales: [],
+      imagingStudies: [],
+      alerts: []
     };
 
-    setPatients([patient, ...patients]);
+    addPatient(patient);
     addNotification('Paciente Registrado', `${patient.firstName} ${patient.lastName} ha sido registrado exitosamente.`);
     setIsModalOpen(false);
     setNewPatient({
@@ -133,9 +106,7 @@ export function Patients() {
 
       {/* Patient List */}
       <div className="bg-white shadow-sm border border-slate-200 rounded-xl overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center text-slate-500">Cargando pacientes...</div>
-        ) : filteredPatients.length === 0 ? (
+        {filteredPatients.length === 0 ? (
           <div className="p-8 text-center text-slate-500">No se encontraron pacientes.</div>
         ) : (
           <ul role="list" className="divide-y divide-slate-200">
@@ -181,12 +152,10 @@ export function Patients() {
       {/* Add Patient Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={() => setIsModalOpen(false)}></div>
+          <div className="flex min-h-screen items-center justify-center p-4 text-center">
+            <div className="fixed inset-0 bg-slate-900/50 transition-opacity" aria-hidden="true" onClick={() => setIsModalOpen(false)}></div>
 
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+            <div className="relative w-full max-w-lg transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
               <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg leading-6 font-medium text-slate-900" id="modal-title">

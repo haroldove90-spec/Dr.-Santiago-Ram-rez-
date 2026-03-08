@@ -1,16 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { 
   User, Calendar, Phone, Mail, AlertTriangle, Activity, 
-  Pill, FileText, ArrowLeft, Clock, Brain, Edit2, Save, X 
+  Pill, FileText, ArrowLeft, Clock, Brain, Edit2, Save, X, Download 
 } from 'lucide-react';
 import { Patient } from '@/types/patient';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useNotification } from '@/context/NotificationContext';
+import { usePatients } from '@/context/PatientContext';
+import { useRole } from '@/context/RoleContext';
+import jsPDF from 'jspdf';
 
 export function PatientDetail() {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  const { getPatientById, updatePatient } = usePatients();
+  const { role } = useRole();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,43 +34,51 @@ export function PatientDetail() {
     email: '',
     emergencyContact: '',
     chiefComplaint: '',
-    historyOfPresentIllness: ''
+    historyOfPresentIllness: '',
+    pastMedicalHistory: '',
+    familyHistory: '',
+    socialHistory: ''
   });
 
   useEffect(() => {
-    const fetchPatient = async () => {
-      try {
-        const response = await fetch(`/api/patients/${id}`);
-        if (!response.ok) throw new Error('Failed to fetch patient');
-        const data = await response.json();
-        setPatient(data);
+    if (id) {
+      const foundPatient = getPatientById(id);
+      if (foundPatient) {
+        setPatient(foundPatient);
         setEditForm({
-          firstName: data.firstName,
-          lastName: data.lastName,
-          dateOfBirth: data.dateOfBirth,
-          gender: data.gender,
-          phone: data.contact.phone,
-          email: data.contact.email,
-          emergencyContact: data.contact.emergencyContact,
-          chiefComplaint: data.history.chiefComplaint,
-          historyOfPresentIllness: data.history.historyOfPresentIllness
+          firstName: foundPatient.firstName,
+          lastName: foundPatient.lastName,
+          dateOfBirth: foundPatient.dateOfBirth,
+          gender: foundPatient.gender,
+          phone: foundPatient.contact.phone,
+          email: foundPatient.contact.email,
+          emergencyContact: foundPatient.contact.emergencyContact,
+          chiefComplaint: foundPatient.history.chiefComplaint,
+          historyOfPresentIllness: foundPatient.history.historyOfPresentIllness,
+          pastMedicalHistory: foundPatient.history.pastMedicalHistory.join('\n'),
+          familyHistory: foundPatient.history.familyHistory.join('\n'),
+          socialHistory: foundPatient.history.socialHistory
         });
-      } catch (err) {
-        setError('Error loading patient data');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    if (id) fetchPatient();
-  }, [id]);
+        // Check for edit mode in location state
+        if (location.state && (location.state as any).editMode) {
+          setIsEditing(true);
+          // If specifically asked to edit history, switch to that tab
+          if ((location.state as any).tab) {
+            setActiveTab((location.state as any).tab);
+          }
+        }
+      } else {
+        setError('Paciente no encontrado');
+      }
+      setLoading(false);
+    }
+  }, [id, getPatientById, location.state]);
 
   const handleSave = () => {
-    if (!patient) return;
+    if (!patient || !id) return;
     
-    const updatedPatient = {
-      ...patient,
+    const updatedFields: Partial<Patient> = {
       firstName: editForm.firstName,
       lastName: editForm.lastName,
       dateOfBirth: editForm.dateOfBirth,
@@ -78,13 +92,96 @@ export function PatientDetail() {
       history: {
         ...patient.history,
         chiefComplaint: editForm.chiefComplaint,
-        historyOfPresentIllness: editForm.historyOfPresentIllness
+        historyOfPresentIllness: editForm.historyOfPresentIllness,
+        pastMedicalHistory: editForm.pastMedicalHistory.split('\n').filter(item => item.trim() !== ''),
+        familyHistory: editForm.familyHistory.split('\n').filter(item => item.trim() !== ''),
+        socialHistory: editForm.socialHistory
       }
     };
 
-    setPatient(updatedPatient);
+    updatePatient(id, updatedFields);
+    setPatient({ ...patient, ...updatedFields });
     setIsEditing(false);
     addNotification('Información Actualizada', 'Los datos del paciente han sido guardados correctamente.');
+  };
+
+  const exportToPDF = () => {
+    if (!patient) return;
+
+    const doc = new jsPDF('p', 'pt', 'letter');
+    const margin = 40;
+    let yPos = margin;
+
+    // Header
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Historial Médico - Dr. Noe Santiago', margin, yPos);
+    yPos += 30;
+
+    // Patient Info
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Paciente: ${patient.lastName}, ${patient.firstName}`, margin, yPos);
+    yPos += 20;
+    doc.text(`Historia Clínica: ${patient.mrn}`, margin, yPos);
+    yPos += 20;
+    doc.text(`Fecha de Nacimiento: ${format(new Date(patient.dateOfBirth), 'dd/MM/yyyy')} (${patient.gender})`, margin, yPos);
+    yPos += 30;
+
+    // Line separator
+    doc.setLineWidth(1);
+    doc.line(margin, yPos, 612 - margin, yPos);
+    yPos += 20;
+
+    // Motivo de Consulta
+    doc.setFont('helvetica', 'bold');
+    doc.text('Motivo de Consulta:', margin, yPos);
+    yPos += 15;
+    doc.setFont('helvetica', 'normal');
+    const splitComplaint = doc.splitTextToSize(patient.history.chiefComplaint || 'No registrado', 612 - 2 * margin);
+    doc.text(splitComplaint, margin, yPos);
+    yPos += splitComplaint.length * 15 + 10;
+
+    // Enfermedad Actual
+    doc.setFont('helvetica', 'bold');
+    doc.text('Enfermedad Actual:', margin, yPos);
+    yPos += 15;
+    doc.setFont('helvetica', 'normal');
+    const splitIllness = doc.splitTextToSize(patient.history.historyOfPresentIllness || 'No registrado', 612 - 2 * margin);
+    doc.text(splitIllness, margin, yPos);
+    yPos += splitIllness.length * 15 + 10;
+
+    // Antecedentes Patológicos
+    doc.setFont('helvetica', 'bold');
+    doc.text('Antecedentes Patológicos:', margin, yPos);
+    yPos += 15;
+    doc.setFont('helvetica', 'normal');
+    const pmh = patient.history.pastMedicalHistory.length > 0 ? patient.history.pastMedicalHistory.join(', ') : 'No registrados';
+    const splitPmh = doc.splitTextToSize(pmh, 612 - 2 * margin);
+    doc.text(splitPmh, margin, yPos);
+    yPos += splitPmh.length * 15 + 10;
+
+    // Antecedentes Familiares
+    doc.setFont('helvetica', 'bold');
+    doc.text('Antecedentes Familiares:', margin, yPos);
+    yPos += 15;
+    doc.setFont('helvetica', 'normal');
+    const fh = patient.history.familyHistory.length > 0 ? patient.history.familyHistory.join(', ') : 'No registrados';
+    const splitFh = doc.splitTextToSize(fh, 612 - 2 * margin);
+    doc.text(splitFh, margin, yPos);
+    yPos += splitFh.length * 15 + 10;
+
+    // Antecedentes Sociales
+    doc.setFont('helvetica', 'bold');
+    doc.text('Antecedentes Sociales:', margin, yPos);
+    yPos += 15;
+    doc.setFont('helvetica', 'normal');
+    const splitSh = doc.splitTextToSize(patient.history.socialHistory || 'No registrado', 612 - 2 * margin);
+    doc.text(splitSh, margin, yPos);
+
+    // Save PDF
+    doc.save(`Historial_${patient.lastName}_${patient.firstName}.pdf`);
+    addNotification('PDF Exportado', 'El historial médico se ha descargado correctamente.');
   };
 
   if (loading) return <div className="p-8 text-center text-slate-500">Cargando expediente...</div>;
@@ -135,6 +232,15 @@ export function PatientDetail() {
              ))}
           </div>
           
+          {role === 'doctor' && (
+            <button
+              onClick={exportToPDF}
+              className="inline-flex items-center px-3 py-2 border border-slate-300 shadow-sm text-sm leading-4 font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none"
+            >
+              <Download className="w-4 h-4 mr-2" /> Exportar PDF
+            </button>
+          )}
+
           {isEditing ? (
             <div className="flex gap-2">
               <button 
@@ -263,19 +369,56 @@ export function PatientDetail() {
                <div className="space-y-4">
                  <div>
                    <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Antecedentes Patológicos</h4>
-                   <ul className="list-disc list-inside text-sm text-slate-600 space-y-1">
-                     {patient.history.pastMedicalHistory.map((item, i) => <li key={i}>{item}</li>)}
-                   </ul>
+                   {isEditing ? (
+                     <textarea
+                       className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2"
+                       rows={3}
+                       value={editForm.pastMedicalHistory}
+                       onChange={(e) => setEditForm({...editForm, pastMedicalHistory: e.target.value})}
+                       placeholder="Ingrese antecedentes separados por línea"
+                     />
+                   ) : (
+                     <ul className="list-disc list-inside text-sm text-slate-600 space-y-1">
+                       {patient.history.pastMedicalHistory.length > 0 ? (
+                         patient.history.pastMedicalHistory.map((item, i) => <li key={i}>{item}</li>)
+                       ) : (
+                         <li className="italic text-slate-400">Sin antecedentes registrados</li>
+                       )}
+                     </ul>
+                   )}
                  </div>
                  <div className="border-t border-slate-100 pt-4">
                    <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Antecedentes Familiares</h4>
-                   <ul className="list-disc list-inside text-sm text-slate-600 space-y-1">
-                     {patient.history.familyHistory.map((item, i) => <li key={i}>{item}</li>)}
-                   </ul>
+                   {isEditing ? (
+                     <textarea
+                       className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2"
+                       rows={3}
+                       value={editForm.familyHistory}
+                       onChange={(e) => setEditForm({...editForm, familyHistory: e.target.value})}
+                       placeholder="Ingrese antecedentes separados por línea"
+                     />
+                   ) : (
+                     <ul className="list-disc list-inside text-sm text-slate-600 space-y-1">
+                       {patient.history.familyHistory.length > 0 ? (
+                         patient.history.familyHistory.map((item, i) => <li key={i}>{item}</li>)
+                       ) : (
+                         <li className="italic text-slate-400">Sin antecedentes registrados</li>
+                       )}
+                     </ul>
+                   )}
                  </div>
                  <div className="border-t border-slate-100 pt-4">
                    <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Antecedentes Sociales</h4>
-                   <p className="text-sm text-slate-600">{patient.history.socialHistory}</p>
+                   {isEditing ? (
+                     <textarea
+                       className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2"
+                       rows={3}
+                       value={editForm.socialHistory}
+                       onChange={(e) => setEditForm({...editForm, socialHistory: e.target.value})}
+                     />
+                   ) : (
+                     <p className="text-sm text-slate-600">{patient.history.socialHistory || <span className="italic text-slate-400">Sin antecedentes registrados</span>}</p>
+                   )}
                  </div>
                </div>
              </div>
