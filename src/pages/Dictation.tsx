@@ -36,15 +36,15 @@ export function Dictation() {
       });
 
       if (response.ok) {
-        alert('Successfully updated patient record!');
+        alert('¡Expediente actualizado exitosamente!');
         setStructuredData(null);
         setTranscript('');
         setSelectedPatientId('');
       } else {
-        throw new Error('Failed to save');
+        throw new Error('Error al guardar');
       }
     } catch (err) {
-      alert('Error saving to record');
+      alert('Error al guardar en el expediente');
       console.error(err);
     } finally {
       setSaving(false);
@@ -62,7 +62,7 @@ export function Dictation() {
       // Stop recording simulation
       // Pre-fill with a realistic clinical example if empty
       if (!transcript) {
-        setTranscript("Patient is a 65-year-old male presenting with sudden onset right-sided weakness and slurred speech starting 2 hours ago. History of hypertension and atrial fibrillation. Current medications include Metoprolol 50mg twice daily. BP is 160/95. NIHSS score appears to be around 12. Recommend immediate CT head and CTA.");
+        setTranscript("Paciente masculino de 65 años que presenta debilidad súbita en el lado derecho y dificultad para hablar desde hace 2 horas. Antecedentes de hipertensión y fibrilación auricular. Medicación actual incluye Metoprolol 50mg dos veces al día. PA es 160/95. La puntuación NIHSS parece ser alrededor de 12. Se recomienda TC de cabeza inmediata y Angio-TC.");
       }
     }
   };
@@ -82,13 +82,13 @@ export function Dictation() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to process dictation');
+        throw new Error('Error al procesar el dictado');
       }
 
       const data = await response.json();
       setStructuredData(data);
     } catch (err) {
-      setError('Error processing dictation. Please try again.');
+      setError('Error al procesar el dictado. Por favor intente de nuevo.');
       console.error(err);
     } finally {
       setIsProcessing(false);
@@ -98,9 +98,9 @@ export function Dictation() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="bg-white shadow-sm border border-slate-200 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">AI Voice Dictation</h2>
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">Dictado de Voz con IA</h2>
         <p className="text-sm text-slate-500 mb-6">
-          Record your clinical notes. AI will transcribe and structure the data automatically.
+          Grabe sus notas clínicas. La IA transcribirá y estructurará los datos automáticamente.
         </p>
 
         <div className="flex justify-center mb-8">
@@ -117,10 +117,10 @@ export function Dictation() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Live Transcript (Editable)</label>
+          <label className="text-sm font-medium text-slate-700">Transcripción en Vivo (Editable)</label>
           <textarea
-            className="w-full h-32 p-4 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none font-mono text-sm"
-            placeholder="Transcript will appear here... (or type manually)"
+            className="w-full h-32 p-4 rounded-lg border border-slate-300 focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none font-mono text-sm"
+            placeholder="La transcripción aparecerá aquí... (o escriba manualmente)"
             value={transcript}
             onChange={(e) => setTranscript(e.target.value)}
           />
@@ -133,7 +133,7 @@ export function Dictation() {
                 <AlertCircle className="h-5 w-5 text-red-400" aria-hidden="true" />
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Processing Error</h3>
+                <h3 className="text-sm font-medium text-red-800">Error de Procesamiento</h3>
                 <div className="mt-2 text-sm text-red-700">
                   <p>{error}</p>
                 </div>
@@ -146,17 +146,17 @@ export function Dictation() {
           <button
             onClick={processDictation}
             disabled={!transcript || isProcessing}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isProcessing ? (
               <>
                 <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
-                Processing with Gemini...
+                Procesando con Gemini...
               </>
             ) : (
               <>
                 <FileJson className="-ml-1 mr-2 h-4 w-4" />
-                Process & Structure Data
+                Procesar y Estructurar Datos
               </>
             )}
           </button>
@@ -166,32 +166,32 @@ export function Dictation() {
       {structuredData && (
         <div className="bg-slate-50 shadow-sm border border-slate-200 rounded-xl p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
-            <FileJson className="h-5 w-5 mr-2 text-emerald-600" />
-            Structured Data Preview
+            <FileJson className="h-5 w-5 mr-2 text-green-600" />
+            Vista Previa de Datos Estructurados
           </h3>
           <div className="bg-slate-900 rounded-lg p-4 overflow-x-auto">
-            <pre className="text-emerald-400 text-xs font-mono">
+            <pre className="text-green-400 text-xs font-mono">
               {JSON.stringify(structuredData, null, 2)}
             </pre>
           </div>
           <div className="mt-4 flex justify-end items-center space-x-4">
              <select
-               className="block rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm p-2 border"
+               className="block rounded-md border-slate-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm p-2 border"
                value={selectedPatientId}
                onChange={(e) => setSelectedPatientId(e.target.value)}
              >
-               <option value="">-- Select Patient to Update --</option>
+               <option value="">-- Seleccionar Paciente para Actualizar --</option>
                {patients.map(p => (
                  <option key={p.id} value={p.id}>{p.lastName}, {p.firstName}</option>
                ))}
              </select>
              <button
-              className="inline-flex items-center px-4 py-2 border border-slate-300 shadow-sm text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50"
+              className="inline-flex items-center px-4 py-2 border border-slate-300 shadow-sm text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
               onClick={saveToRecord}
               disabled={!selectedPatientId || saving}
             >
               <Save className="-ml-1 mr-2 h-4 w-4 text-slate-500" />
-              {saving ? 'Saving...' : 'Confirm & Save to Record'}
+              {saving ? 'Guardando...' : 'Confirmar y Guardar en Expediente'}
             </button>
           </div>
         </div>

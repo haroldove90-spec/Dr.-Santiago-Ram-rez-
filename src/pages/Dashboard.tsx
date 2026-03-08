@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Users, AlertTriangle, Activity, Calendar, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 export function Dashboard() {
   const [stats, setStats] = useState<any>(null);
@@ -26,21 +27,21 @@ export function Dashboard() {
   }, []);
 
   if (loading) {
-    return <div className="p-8 text-center text-slate-500">Loading dashboard...</div>;
+    return <div className="p-8 text-center text-slate-500">Cargando tablero...</div>;
   }
 
   const statCards = [
-    { name: 'Total Patients', value: stats?.totalPatients || 0, change: 'Active', icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
-    { name: 'High Risk Alerts', value: stats?.criticalAlerts || 0, change: 'Urgent', icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-100' },
-    { name: 'Recent Scales', value: stats?.recentScales || 0, change: 'Last 7 days', icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-100' },
-    { name: 'Appointments', value: '8', change: 'Today', icon: Calendar, color: 'text-purple-600', bg: 'bg-purple-100' },
+    { name: 'Total de Pacientes', value: stats?.totalPatients || 0, change: 'Activos', icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
+    { name: 'Alertas Críticas', value: stats?.criticalAlerts || 0, change: 'Urgente', icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-100' },
+    { name: 'Escalas Recientes', value: stats?.recentScales || 0, change: 'Últimos 7 días', icon: Activity, color: 'text-green-600', bg: 'bg-green-100' },
+    { name: 'Citas Hoy', value: '8', change: 'En curso', icon: Calendar, color: 'text-purple-600', bg: 'bg-purple-100' },
   ];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-        <p className="mt-1 text-sm text-slate-500">Overview of your practice and critical updates.</p>
+        <h1 className="text-2xl font-bold text-slate-900">Tablero Principal</h1>
+        <p className="mt-1 text-sm text-slate-500">Resumen de su práctica y actualizaciones críticas.</p>
       </div>
 
       {/* Stats Grid */}
@@ -67,9 +68,9 @@ export function Dashboard() {
         {/* Recent Patients */}
         <div className="rounded-xl bg-white shadow-sm border border-slate-100">
           <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between">
-            <h3 className="text-base font-semibold leading-6 text-slate-900">Recent Patients</h3>
-            <Link to="/patients" className="text-sm font-medium text-emerald-600 hover:text-emerald-500 flex items-center">
-              View all <ArrowRight className="ml-1 w-4 h-4" />
+            <h3 className="text-base font-semibold leading-6 text-slate-900">Pacientes Recientes</h3>
+            <Link to="/patients" className="text-sm font-medium text-green-600 hover:text-green-500 flex items-center">
+              Ver todos <ArrowRight className="ml-1 w-4 h-4" />
             </Link>
           </div>
           <div className="flow-root">
@@ -79,7 +80,7 @@ export function Dashboard() {
                   <Link to={`/patients/${patient.id}`} className="flex items-center justify-between">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-slate-900">{patient.lastName}, {patient.firstName}</p>
-                      <p className="truncate text-sm text-slate-500">MRN: {patient.mrn}</p>
+                      <p className="truncate text-sm text-slate-500">HC: {patient.mrn}</p>
                     </div>
                     <div className="flex flex-col items-end">
                       {patient.alerts && patient.alerts.length > 0 ? (
@@ -88,11 +89,11 @@ export function Dashboard() {
                         </span>
                       ) : (
                         <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800">
-                          Stable
+                          Estable
                         </span>
                       )}
                       <p className="mt-1 text-xs text-slate-400">
-                        {format(new Date(patient.lastVisit), 'MMM d')}
+                        {format(new Date(patient.lastVisit), 'd MMM', { locale: es })}
                       </p>
                     </div>
                   </Link>
@@ -104,15 +105,15 @@ export function Dashboard() {
 
         {/* Quick Actions */}
         <div className="rounded-xl bg-white shadow-sm border border-slate-100 p-6">
-          <h3 className="text-base font-semibold leading-6 text-slate-900 mb-4">Quick Actions</h3>
+          <h3 className="text-base font-semibold leading-6 text-slate-900 mb-4">Acciones Rápidas</h3>
           <div className="grid grid-cols-1 gap-4">
-            <Link to="/dictation" className="flex items-center p-4 rounded-lg border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50 transition-all cursor-pointer group">
-              <div className="p-3 rounded-full bg-emerald-100 text-emerald-600 group-hover:bg-emerald-200">
+            <Link to="/dictation" className="flex items-center p-4 rounded-lg border border-slate-200 hover:border-green-500 hover:bg-green-50 transition-all cursor-pointer group">
+              <div className="p-3 rounded-full bg-green-100 text-green-600 group-hover:bg-green-200">
                 <Activity className="h-6 w-6" />
               </div>
               <div className="ml-4">
-                <h4 className="text-sm font-medium text-slate-900">Start New Dictation</h4>
-                <p className="text-xs text-slate-500">Record notes and auto-structure data</p>
+                <h4 className="text-sm font-medium text-slate-900">Iniciar Nuevo Dictado</h4>
+                <p className="text-xs text-slate-500">Grabar notas y estructurar datos automáticamente</p>
               </div>
             </Link>
             
@@ -121,8 +122,8 @@ export function Dashboard() {
                 <Activity className="h-6 w-6" />
               </div>
               <div className="ml-4">
-                <h4 className="text-sm font-medium text-slate-900">NIHSS Calculator</h4>
-                <p className="text-xs text-slate-500">Perform stroke scale assessment</p>
+                <h4 className="text-sm font-medium text-slate-900">Calculadora NIHSS</h4>
+                <p className="text-xs text-slate-500">Realizar evaluación de escala de ictus</p>
               </div>
             </Link>
           </div>

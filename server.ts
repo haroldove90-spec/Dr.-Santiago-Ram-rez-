@@ -113,13 +113,13 @@ async function startServer() {
       const model = "gemini-2.5-flash";
 
       const prompt = `
-        You are a medical assistant. Extract structured data from the following clinical dictation.
+        You are a medical assistant. Extract structured data from the following clinical dictation in Spanish.
         Return ONLY a JSON object with the following structure (do not include markdown formatting):
         {
-          "chiefComplaint": "string",
-          "historyOfPresentIllness": "string",
+          "chiefComplaint": "string (in Spanish)",
+          "historyOfPresentIllness": "string (in Spanish)",
           "medications": [{"name": "string", "dosage": "string", "frequency": "string", "active": true}],
-          "suggestedAlerts": ["string"],
+          "suggestedAlerts": ["string (in Spanish)"],
           "clinicalScales": [{"name": "string", "score": number, "notes": "string"}]
         }
 
@@ -131,7 +131,10 @@ async function startServer() {
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
       });
 
-      const text = response.text();
+      const text = response.text || '';
+      if (!text) {
+        throw new Error('No response from Gemini');
+      }
       // Clean up markdown code blocks if present
       const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
       const structuredData = JSON.parse(jsonStr);
@@ -149,7 +152,7 @@ async function startServer() {
     try {
       const totalPatients = db.prepare('SELECT COUNT(*) as count FROM patients').get() as { count: number };
       const criticalAlerts = db.prepare("SELECT COUNT(*) as count FROM patients WHERE alerts LIKE '%High Stroke Risk%'").get() as { count: number };
-      const recentScales = db.prepare('SELECT COUNT(*) as count FROM clinical_scales WHERE date >= date("now", "-7 days")').get() as { count: number };
+      const recentScales = db.prepare("SELECT COUNT(*) as count FROM clinical_scales WHERE date >= date('now', '-7 days')").get() as { count: number };
       
       // Get recent patients
       const recentPatients = db.prepare('SELECT id, firstName, lastName, mrn, lastVisit, alerts FROM patients ORDER BY lastVisit DESC LIMIT 5').all();
