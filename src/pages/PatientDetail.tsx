@@ -392,89 +392,95 @@ export function PatientDetail() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div className="flex items-center space-x-4">
-          <Link to="/patients" className="p-2 rounded-full hover:bg-slate-100 text-slate-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div className="flex items-start md:items-center space-x-2 sm:space-x-4">
+          <Link to="/patients" className="p-2 rounded-full hover:bg-slate-100 text-slate-500 shrink-0 mt-1 md:mt-0">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <div>
+          <div className="flex-1 min-w-0">
             {isEditing ? (
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input 
                   type="text" 
                   value={editForm.firstName}
                   onChange={(e) => setEditForm({...editForm, firstName: e.target.value})}
-                  className="border border-slate-300 rounded px-2 py-1 text-lg font-bold"
+                  className="border border-slate-300 rounded px-2 py-1 text-lg font-bold w-full sm:w-auto"
+                  placeholder="Nombre"
                 />
                 <input 
                   type="text" 
                   value={editForm.lastName}
                   onChange={(e) => setEditForm({...editForm, lastName: e.target.value})}
-                  className="border border-slate-300 rounded px-2 py-1 text-lg font-bold"
+                  className="border border-slate-300 rounded px-2 py-1 text-lg font-bold w-full sm:w-auto"
+                  placeholder="Apellidos"
                 />
               </div>
             ) : (
-              <h1 className="text-2xl font-bold text-slate-900">{patient.lastName}, {patient.firstName}</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 truncate">{patient.lastName}, {patient.firstName}</h1>
             )}
-            <div className="flex items-center text-sm text-slate-500 space-x-4 mt-1">
-              <span className="flex items-center"><User className="w-4 h-4 mr-1" /> HC: {patient.mrn}</span>
-              <span className="flex items-center"><Calendar className="w-4 h-4 mr-1" /> Nac: {format(new Date(patient.dateOfBirth), 'd MMM, yyyy', { locale: es })}</span>
-              <span className="capitalize">{patient.gender === 'male' ? 'Masculino' : patient.gender === 'female' ? 'Femenino' : 'Otro'}</span>
+            <div className="flex flex-wrap items-center text-xs sm:text-sm text-slate-500 gap-x-4 gap-y-1 mt-1">
+              <span className="flex items-center whitespace-nowrap"><User className="w-4 h-4 mr-1" /> HC: {patient.mrn}</span>
+              <span className="flex items-center whitespace-nowrap"><Calendar className="w-4 h-4 mr-1" /> Nac: {format(new Date(patient.dateOfBirth), 'd MMM, yyyy', { locale: es })}</span>
+              <span className="capitalize whitespace-nowrap">{patient.gender === 'male' ? 'Masculino' : patient.gender === 'female' ? 'Femenino' : 'Otro'}</span>
             </div>
           </div>
         </div>
         
-        <div className="flex items-center gap-3">
-          <div className="flex space-x-2 mr-4">
-             {patient.alerts?.map((alert, idx) => (
-               <span key={idx} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                 <AlertTriangle className="w-4 h-4 mr-1" />
-                 {alert}
-               </span>
-             ))}
-          </div>
-          
-          {role === 'doctor' && (
-            <button
-              onClick={exportToPDF}
-              className="inline-flex items-center px-3 py-2 border border-slate-300 shadow-sm text-sm leading-4 font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none"
-            >
-              <Download className="w-4 h-4 mr-2" /> Exportar PDF
-            </button>
-          )}
-
-          {isEditing ? (
-            <div className="flex gap-2">
-              <button 
-                onClick={() => setIsEditing(false)}
-                className="inline-flex items-center px-3 py-2 border border-slate-300 shadow-sm text-sm leading-4 font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none"
-              >
-                <X className="w-4 h-4 mr-2" /> Cancelar
-              </button>
-              <button 
-                onClick={handleSave}
-                className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-[#215732] hover:bg-[#1a4528] focus:outline-none"
-              >
-                <Save className="w-4 h-4 mr-2" /> Guardar
-              </button>
+        <div className="flex flex-wrap items-center gap-3">
+          {patient.alerts && patient.alerts.length > 0 && (
+            <div className="flex flex-wrap gap-2 w-full md:w-auto md:mr-2">
+               {patient.alerts.map((alert, idx) => (
+                 <span key={idx} className="inline-flex items-center px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-red-100 text-red-800">
+                   <AlertTriangle className="w-4 h-4 mr-1 shrink-0" />
+                   {alert}
+                 </span>
+               ))}
             </div>
-          ) : (
-            <button 
-              onClick={() => {
-                setActiveTab('history');
-                setIsEditing(true);
-              }}
-              className={cn(
-                "inline-flex items-center px-3 py-2 border shadow-sm text-sm leading-4 font-medium rounded-md focus:outline-none",
-                (!patient.history.chiefComplaint && !patient.history.assessment)
-                  ? "border-transparent text-white bg-[#215732] hover:bg-[#1a4528]"
-                  : "border-slate-300 text-slate-700 bg-white hover:bg-slate-50"
-              )}
-            >
-              <Edit2 className="w-4 h-4 mr-2" /> 
-              {(!patient.history.chiefComplaint && !patient.history.assessment) ? 'Registrar Historial Clínico' : 'Editar Expediente'}
-            </button>
           )}
+          
+          <div className="flex flex-wrap gap-2 w-full md:w-auto">
+            {role === 'doctor' && (
+              <button
+                onClick={exportToPDF}
+                className="inline-flex items-center justify-center px-3 py-2 border border-slate-300 shadow-sm text-sm leading-4 font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none flex-1 md:flex-none"
+              >
+                <Download className="w-4 h-4 mr-2" /> Exportar PDF
+              </button>
+            )}
+
+            {isEditing ? (
+              <>
+                <button 
+                  onClick={() => setIsEditing(false)}
+                  className="inline-flex items-center justify-center px-3 py-2 border border-slate-300 shadow-sm text-sm leading-4 font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none flex-1 md:flex-none"
+                >
+                  <X className="w-4 h-4 mr-2" /> Cancelar
+                </button>
+                <button 
+                  onClick={handleSave}
+                  className="inline-flex items-center justify-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-[#215732] hover:bg-[#1a4528] focus:outline-none flex-1 md:flex-none"
+                >
+                  <Save className="w-4 h-4 mr-2" /> Guardar
+                </button>
+              </>
+            ) : (
+              <button 
+                onClick={() => {
+                  setActiveTab('history');
+                  setIsEditing(true);
+                }}
+                className={cn(
+                  "inline-flex items-center justify-center px-3 py-2 border shadow-sm text-sm leading-4 font-medium rounded-md focus:outline-none flex-1 md:flex-none",
+                  (!patient.history.chiefComplaint && !patient.history.assessment)
+                    ? "border-transparent text-white bg-[#215732] hover:bg-[#1a4528]"
+                    : "border-slate-300 text-slate-700 bg-white hover:bg-slate-50"
+                )}
+              >
+                <Edit2 className="w-4 h-4 mr-2" /> 
+                {(!patient.history.chiefComplaint && !patient.history.assessment) ? 'Registrar Historial' : 'Editar Expediente'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
