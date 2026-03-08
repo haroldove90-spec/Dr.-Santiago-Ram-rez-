@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { Patients } from './pages/Patients';
@@ -13,9 +13,22 @@ import { Dictation } from './pages/Dictation';
 import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
 import { Agenda } from './pages/Agenda';
+import { Prescriptions } from './pages/Prescriptions';
 import { PatientDetail } from './pages/PatientDetail';
-import { RoleProvider } from './context/RoleContext';
+import { Login } from './pages/Login';
+import { RoleProvider, useRole } from './context/RoleContext';
 import { NotificationProvider } from './context/NotificationContext';
+
+function ProtectedRoute({ children }: { children: JSX.Element }) {
+  const { isAuthenticated } = useRole();
+  const location = useLocation();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return children;
+}
 
 export default function App() {
   return (
@@ -23,11 +36,20 @@ export default function App() {
       <NotificationProvider>
         <Router>
           <Routes>
-            <Route path="/" element={<Layout />}>
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            >
               <Route index element={<Dashboard />} />
               <Route path="patients" element={<Patients />} />
               <Route path="patients/:id" element={<PatientDetail />} />
               <Route path="agenda" element={<Agenda />} />
+              <Route path="prescriptions" element={<Prescriptions />} />
               <Route path="scales" element={<ClinicalScales />} />
               <Route path="dictation" element={<Dictation />} />
               <Route path="reports" element={<Reports />} />

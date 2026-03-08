@@ -8,6 +8,7 @@ const navigation = [
   { name: 'Inicio', href: '/', icon: LayoutDashboard },
   { name: 'Agenda', href: '/agenda', icon: Calendar },
   { name: 'Pacientes', href: '/patients', icon: Users },
+  { name: 'Recetas', href: '/prescriptions', icon: FileText },
   { name: 'Escalas Clínicas', href: '/scales', icon: Activity },
   { name: 'Dictado de Voz', href: '/dictation', icon: Mic },
   { name: 'Reportes', href: '/reports', icon: FileText },
@@ -43,7 +44,12 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         </button>
       </div>
       <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto">
-        {navigation.map((item) => (
+        {navigation.filter(item => {
+          if (role === 'assistant') {
+            return ['Inicio', 'Agenda', 'Pacientes', 'Reportes', 'Configuración'].includes(item.name);
+          }
+          return true;
+        }).map((item) => (
           <NavLink
             key={item.name}
             to={item.href}
