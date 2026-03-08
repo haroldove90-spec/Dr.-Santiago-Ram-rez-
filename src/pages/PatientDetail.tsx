@@ -37,7 +37,19 @@ export function PatientDetail() {
     historyOfPresentIllness: '',
     pastMedicalHistory: '',
     familyHistory: '',
-    socialHistory: ''
+    socialHistory: '',
+    surgicalHistory: '',
+    allergies: '',
+    generalExam: '',
+    mentalStatus: '',
+    cranialNerves: '',
+    motorSystem: '',
+    reflexes: '',
+    sensorySystem: '',
+    coordinationAndGait: '',
+    meningealSigns: '',
+    assessment: '',
+    plan: ''
   });
 
   useEffect(() => {
@@ -55,9 +67,21 @@ export function PatientDetail() {
           emergencyContact: foundPatient.contact.emergencyContact,
           chiefComplaint: foundPatient.history.chiefComplaint,
           historyOfPresentIllness: foundPatient.history.historyOfPresentIllness,
-          pastMedicalHistory: foundPatient.history.pastMedicalHistory.join('\n'),
-          familyHistory: foundPatient.history.familyHistory.join('\n'),
-          socialHistory: foundPatient.history.socialHistory
+          pastMedicalHistory: Array.isArray(foundPatient.history.pastMedicalHistory) ? foundPatient.history.pastMedicalHistory.join('\n') : foundPatient.history.pastMedicalHistory || '',
+          familyHistory: Array.isArray(foundPatient.history.familyHistory) ? foundPatient.history.familyHistory.join('\n') : foundPatient.history.familyHistory || '',
+          socialHistory: foundPatient.history.socialHistory,
+          surgicalHistory: foundPatient.history.surgicalHistory || '',
+          allergies: foundPatient.history.allergies || '',
+          generalExam: foundPatient.history.generalExam || '',
+          mentalStatus: foundPatient.history.neurologicalExam?.mentalStatus || '',
+          cranialNerves: foundPatient.history.neurologicalExam?.cranialNerves || '',
+          motorSystem: foundPatient.history.neurologicalExam?.motorSystem || '',
+          reflexes: foundPatient.history.neurologicalExam?.reflexes || '',
+          sensorySystem: foundPatient.history.neurologicalExam?.sensorySystem || '',
+          coordinationAndGait: foundPatient.history.neurologicalExam?.coordinationAndGait || '',
+          meningealSigns: foundPatient.history.neurologicalExam?.meningealSigns || '',
+          assessment: foundPatient.history.assessment || '',
+          plan: foundPatient.history.plan || ''
         });
 
         // Check for edit mode in location state
@@ -95,7 +119,21 @@ export function PatientDetail() {
         historyOfPresentIllness: editForm.historyOfPresentIllness,
         pastMedicalHistory: editForm.pastMedicalHistory.split('\n').filter(item => item.trim() !== ''),
         familyHistory: editForm.familyHistory.split('\n').filter(item => item.trim() !== ''),
-        socialHistory: editForm.socialHistory
+        socialHistory: editForm.socialHistory,
+        surgicalHistory: editForm.surgicalHistory,
+        allergies: editForm.allergies,
+        generalExam: editForm.generalExam,
+        neurologicalExam: {
+          mentalStatus: editForm.mentalStatus,
+          cranialNerves: editForm.cranialNerves,
+          motorSystem: editForm.motorSystem,
+          reflexes: editForm.reflexes,
+          sensorySystem: editForm.sensorySystem,
+          coordinationAndGait: editForm.coordinationAndGait,
+          meningealSigns: editForm.meningealSigns,
+        },
+        assessment: editForm.assessment,
+        plan: editForm.plan
       }
     };
 
@@ -134,50 +172,148 @@ export function PatientDetail() {
     yPos += 20;
 
     // Motivo de Consulta
+    const checkPageBreak = (lines: number) => {
+      if (yPos + (lines * 15) > 750) {
+        doc.addPage();
+        yPos = margin;
+      }
+    };
+
     doc.setFont('helvetica', 'bold');
     doc.text('Motivo de Consulta:', margin, yPos);
     yPos += 15;
     doc.setFont('helvetica', 'normal');
     const splitComplaint = doc.splitTextToSize(patient.history.chiefComplaint || 'No registrado', 612 - 2 * margin);
+    checkPageBreak(splitComplaint.length);
     doc.text(splitComplaint, margin, yPos);
     yPos += splitComplaint.length * 15 + 10;
 
     // Enfermedad Actual
+    checkPageBreak(2);
     doc.setFont('helvetica', 'bold');
     doc.text('Enfermedad Actual:', margin, yPos);
     yPos += 15;
     doc.setFont('helvetica', 'normal');
     const splitIllness = doc.splitTextToSize(patient.history.historyOfPresentIllness || 'No registrado', 612 - 2 * margin);
+    checkPageBreak(splitIllness.length);
     doc.text(splitIllness, margin, yPos);
     yPos += splitIllness.length * 15 + 10;
 
     // Antecedentes Patológicos
+    checkPageBreak(2);
     doc.setFont('helvetica', 'bold');
     doc.text('Antecedentes Patológicos:', margin, yPos);
     yPos += 15;
     doc.setFont('helvetica', 'normal');
-    const pmh = patient.history.pastMedicalHistory.length > 0 ? patient.history.pastMedicalHistory.join(', ') : 'No registrados';
+    const pmh = Array.isArray(patient.history.pastMedicalHistory) ? patient.history.pastMedicalHistory.join(', ') : patient.history.pastMedicalHistory || 'No registrados';
     const splitPmh = doc.splitTextToSize(pmh, 612 - 2 * margin);
+    checkPageBreak(splitPmh.length);
     doc.text(splitPmh, margin, yPos);
     yPos += splitPmh.length * 15 + 10;
 
+    // Antecedentes Quirúrgicos
+    checkPageBreak(2);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Antecedentes Quirúrgicos/Traumáticos:', margin, yPos);
+    yPos += 15;
+    doc.setFont('helvetica', 'normal');
+    const splitSurg = doc.splitTextToSize(patient.history.surgicalHistory || 'No registrados', 612 - 2 * margin);
+    checkPageBreak(splitSurg.length);
+    doc.text(splitSurg, margin, yPos);
+    yPos += splitSurg.length * 15 + 10;
+
     // Antecedentes Familiares
+    checkPageBreak(2);
     doc.setFont('helvetica', 'bold');
     doc.text('Antecedentes Familiares:', margin, yPos);
     yPos += 15;
     doc.setFont('helvetica', 'normal');
-    const fh = patient.history.familyHistory.length > 0 ? patient.history.familyHistory.join(', ') : 'No registrados';
+    const fh = Array.isArray(patient.history.familyHistory) ? patient.history.familyHistory.join(', ') : patient.history.familyHistory || 'No registrados';
     const splitFh = doc.splitTextToSize(fh, 612 - 2 * margin);
+    checkPageBreak(splitFh.length);
     doc.text(splitFh, margin, yPos);
     yPos += splitFh.length * 15 + 10;
 
-    // Antecedentes Sociales
+    // Antecedentes Sociales y Alergias
+    checkPageBreak(3);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Alergias:', margin, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(patient.history.allergies || 'Ninguna conocida', margin + 60, yPos);
+    yPos += 15;
     doc.setFont('helvetica', 'bold');
     doc.text('Antecedentes Sociales:', margin, yPos);
     yPos += 15;
     doc.setFont('helvetica', 'normal');
     const splitSh = doc.splitTextToSize(patient.history.socialHistory || 'No registrado', 612 - 2 * margin);
+    checkPageBreak(splitSh.length);
     doc.text(splitSh, margin, yPos);
+    yPos += splitSh.length * 15 + 10;
+
+    // Examen Físico General
+    checkPageBreak(2);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Examen Físico General:', margin, yPos);
+    yPos += 15;
+    doc.setFont('helvetica', 'normal');
+    const splitGe = doc.splitTextToSize(patient.history.generalExam || 'No registrado', 612 - 2 * margin);
+    checkPageBreak(splitGe.length);
+    doc.text(splitGe, margin, yPos);
+    yPos += splitGe.length * 15 + 10;
+
+    // Examen Neurológico
+    checkPageBreak(2);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Examen Neurológico:', margin, yPos);
+    yPos += 15;
+    doc.setFont('helvetica', 'normal');
+    
+    const neuroExam = patient.history.neurologicalExam || {};
+    const neuroFields = [
+      { label: 'Estado Mental:', value: neuroExam.mentalStatus },
+      { label: 'Pares Craneales:', value: neuroExam.cranialNerves },
+      { label: 'Sistema Motor:', value: neuroExam.motorSystem },
+      { label: 'Reflejos:', value: neuroExam.reflexes },
+      { label: 'Sistema Sensitivo:', value: neuroExam.sensorySystem },
+      { label: 'Coordinación y Marcha:', value: neuroExam.coordinationAndGait },
+      { label: 'Signos Meníngeos:', value: neuroExam.meningealSigns }
+    ];
+
+    neuroFields.forEach(field => {
+      if (field.value) {
+        checkPageBreak(2);
+        doc.setFont('helvetica', 'bold');
+        doc.text(field.label, margin, yPos);
+        yPos += 15;
+        doc.setFont('helvetica', 'normal');
+        const splitField = doc.splitTextToSize(field.value, 612 - 2 * margin);
+        checkPageBreak(splitField.length);
+        doc.text(splitField, margin, yPos);
+        yPos += splitField.length * 15 + 5;
+      }
+    });
+    yPos += 5;
+
+    // Impresión Diagnóstica
+    checkPageBreak(2);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Impresión Diagnóstica:', margin, yPos);
+    yPos += 15;
+    doc.setFont('helvetica', 'normal');
+    const splitAssessment = doc.splitTextToSize(patient.history.assessment || 'No registrado', 612 - 2 * margin);
+    checkPageBreak(splitAssessment.length);
+    doc.text(splitAssessment, margin, yPos);
+    yPos += splitAssessment.length * 15 + 10;
+
+    // Plan de Manejo
+    checkPageBreak(2);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Plan de Manejo:', margin, yPos);
+    yPos += 15;
+    doc.setFont('helvetica', 'normal');
+    const splitPlan = doc.splitTextToSize(patient.history.plan || 'No registrado', 612 - 2 * margin);
+    checkPageBreak(splitPlan.length);
+    doc.text(splitPlan, margin, yPos);
 
     // Save PDF
     doc.save(`Historial_${patient.lastName}_${patient.firstName}.pdf`);
@@ -364,63 +500,171 @@ export function PatientDetail() {
           )}
 
           {activeTab === 'history' && (
-             <div className="bg-white shadow-sm rounded-xl p-6 border border-slate-200">
-               <h3 className="text-lg font-semibold text-slate-900 mb-4">Historial Médico</h3>
-               <div className="space-y-4">
-                 <div>
-                   <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Antecedentes Patológicos</h4>
-                   {isEditing ? (
-                     <textarea
-                       className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2"
-                       rows={3}
-                       value={editForm.pastMedicalHistory}
-                       onChange={(e) => setEditForm({...editForm, pastMedicalHistory: e.target.value})}
-                       placeholder="Ingrese antecedentes separados por línea"
-                     />
-                   ) : (
-                     <ul className="list-disc list-inside text-sm text-slate-600 space-y-1">
-                       {patient.history.pastMedicalHistory.length > 0 ? (
-                         patient.history.pastMedicalHistory.map((item, i) => <li key={i}>{item}</li>)
-                       ) : (
-                         <li className="italic text-slate-400">Sin antecedentes registrados</li>
-                       )}
-                     </ul>
-                   )}
-                 </div>
-                 <div className="border-t border-slate-100 pt-4">
-                   <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Antecedentes Familiares</h4>
-                   {isEditing ? (
-                     <textarea
-                       className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2"
-                       rows={3}
-                       value={editForm.familyHistory}
-                       onChange={(e) => setEditForm({...editForm, familyHistory: e.target.value})}
-                       placeholder="Ingrese antecedentes separados por línea"
-                     />
-                   ) : (
-                     <ul className="list-disc list-inside text-sm text-slate-600 space-y-1">
-                       {patient.history.familyHistory.length > 0 ? (
-                         patient.history.familyHistory.map((item, i) => <li key={i}>{item}</li>)
-                       ) : (
-                         <li className="italic text-slate-400">Sin antecedentes registrados</li>
-                       )}
-                     </ul>
-                   )}
-                 </div>
-                 <div className="border-t border-slate-100 pt-4">
-                   <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Antecedentes Sociales</h4>
-                   {isEditing ? (
-                     <textarea
-                       className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2"
-                       rows={3}
-                       value={editForm.socialHistory}
-                       onChange={(e) => setEditForm({...editForm, socialHistory: e.target.value})}
-                     />
-                   ) : (
-                     <p className="text-sm text-slate-600">{patient.history.socialHistory || <span className="italic text-slate-400">Sin antecedentes registrados</span>}</p>
-                   )}
+             <div className="bg-white shadow-sm rounded-xl p-6 border border-slate-200 space-y-8">
+               
+               {/* Antecedentes */}
+               <div>
+                 <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Antecedentes</h3>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div>
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Patológicos</h4>
+                     {isEditing ? (
+                       <textarea
+                         className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
+                         rows={3}
+                         value={editForm.pastMedicalHistory}
+                         onChange={(e) => setEditForm({...editForm, pastMedicalHistory: e.target.value})}
+                         placeholder="Ej. Hipertensión, Diabetes..."
+                       />
+                     ) : (
+                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.pastMedicalHistory || <span className="italic text-slate-400">Sin antecedentes registrados</span>}</p>
+                     )}
+                   </div>
+                   <div>
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Quirúrgicos / Traumáticos</h4>
+                     {isEditing ? (
+                       <textarea
+                         className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
+                         rows={3}
+                         value={editForm.surgicalHistory}
+                         onChange={(e) => setEditForm({...editForm, surgicalHistory: e.target.value})}
+                         placeholder="Cirugías previas, TCE..."
+                       />
+                     ) : (
+                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.surgicalHistory || <span className="italic text-slate-400">Sin antecedentes registrados</span>}</p>
+                     )}
+                   </div>
+                   <div>
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Familiares</h4>
+                     {isEditing ? (
+                       <textarea
+                         className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
+                         rows={3}
+                         value={editForm.familyHistory}
+                         onChange={(e) => setEditForm({...editForm, familyHistory: e.target.value})}
+                         placeholder="Enfermedades hereditarias..."
+                       />
+                     ) : (
+                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.familyHistory || <span className="italic text-slate-400">Sin antecedentes registrados</span>}</p>
+                     )}
+                   </div>
+                   <div>
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Tóxico-Alérgicos / Sociales</h4>
+                     {isEditing ? (
+                       <div className="space-y-3">
+                         <input
+                           type="text"
+                           className="block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
+                           value={editForm.allergies}
+                           onChange={(e) => setEditForm({...editForm, allergies: e.target.value})}
+                           placeholder="Alergias..."
+                         />
+                         <textarea
+                           className="block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
+                           rows={2}
+                           value={editForm.socialHistory}
+                           onChange={(e) => setEditForm({...editForm, socialHistory: e.target.value})}
+                           placeholder="Tabaquismo, alcohol, drogas..."
+                         />
+                       </div>
+                     ) : (
+                       <div className="text-sm text-slate-600 space-y-1">
+                         <p><strong>Alergias:</strong> {patient.history.allergies || 'Ninguna conocida'}</p>
+                         <p><strong>Hábitos:</strong> {patient.history.socialHistory || 'No registrados'}</p>
+                       </div>
+                     )}
+                   </div>
                  </div>
                </div>
+
+               {/* Examen Físico y Neurológico */}
+               <div>
+                 <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Examen Físico y Neurológico</h3>
+                 <div className="space-y-6">
+                   <div>
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Examen General</h4>
+                     {isEditing ? (
+                       <textarea
+                         className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
+                         rows={2}
+                         value={editForm.generalExam}
+                         onChange={(e) => setEditForm({...editForm, generalExam: e.target.value})}
+                         placeholder="Signos vitales, aspecto general..."
+                       />
+                     ) : (
+                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.generalExam || <span className="italic text-slate-400">No registrado</span>}</p>
+                     )}
+                   </div>
+                   
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-100">
+                     <div className="col-span-1 md:col-span-2">
+                       <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-2">Examen Neurológico</h4>
+                     </div>
+                     
+                     {[
+                       { key: 'mentalStatus', label: 'Estado Mental' },
+                       { key: 'cranialNerves', label: 'Pares Craneales' },
+                       { key: 'motorSystem', label: 'Sistema Motor' },
+                       { key: 'reflexes', label: 'Reflejos' },
+                       { key: 'sensorySystem', label: 'Sistema Sensitivo' },
+                       { key: 'coordinationAndGait', label: 'Coordinación y Marcha' },
+                       { key: 'meningealSigns', label: 'Signos Meníngeos' },
+                     ].map((field) => (
+                       <div key={field.key} className={field.key === 'mentalStatus' ? 'col-span-1 md:col-span-2' : ''}>
+                         <label className="block text-xs font-medium text-slate-700 mb-1">{field.label}</label>
+                         {isEditing ? (
+                           <textarea
+                             className="block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
+                             rows={2}
+                             value={(editForm as any)[field.key]}
+                             onChange={(e) => setEditForm({...editForm, [field.key]: e.target.value})}
+                           />
+                         ) : (
+                           <p className="text-sm text-slate-600 bg-white p-2 rounded border border-slate-200 min-h-[2.5rem]">
+                             {(patient.history.neurologicalExam as any)?.[field.key] || <span className="italic text-slate-400">Normal / No evaluado</span>}
+                           </p>
+                         )}
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+               </div>
+
+               {/* Diagnóstico y Plan */}
+               <div>
+                 <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Diagnóstico y Plan</h3>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div>
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Impresión Diagnóstica</h4>
+                     {isEditing ? (
+                       <textarea
+                         className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
+                         rows={4}
+                         value={editForm.assessment}
+                         onChange={(e) => setEditForm({...editForm, assessment: e.target.value})}
+                         placeholder="Diagnósticos sindromáticos, topográficos, etiológicos..."
+                       />
+                     ) : (
+                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.assessment || <span className="italic text-slate-400">No registrado</span>}</p>
+                     )}
+                   </div>
+                   <div>
+                     <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Plan de Manejo</h4>
+                     {isEditing ? (
+                       <textarea
+                         className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm"
+                         rows={4}
+                         value={editForm.plan}
+                         onChange={(e) => setEditForm({...editForm, plan: e.target.value})}
+                         placeholder="Estudios solicitados, tratamiento, recomendaciones..."
+                       />
+                     ) : (
+                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{patient.history.plan || <span className="italic text-slate-400">No registrado</span>}</p>
+                     )}
+                   </div>
+                 </div>
+               </div>
+
              </div>
           )}
 

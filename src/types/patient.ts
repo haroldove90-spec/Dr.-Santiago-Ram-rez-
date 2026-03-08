@@ -26,12 +26,28 @@ export interface ImagingStudy {
   dicomUrl?: string;
 }
 
+export interface NeurologicalExam {
+  mentalStatus?: string;
+  cranialNerves?: string;
+  motorSystem?: string;
+  reflexes?: string;
+  sensorySystem?: string;
+  coordinationAndGait?: string;
+  meningealSigns?: string;
+}
+
 export interface NeurologicalHistory {
   chiefComplaint: string;
   historyOfPresentIllness: string;
-  pastMedicalHistory: string[];
-  familyHistory: string[];
+  pastMedicalHistory: string | string[];
+  surgicalHistory?: string;
+  familyHistory: string | string[];
+  allergies?: string;
   socialHistory: string;
+  generalExam?: string;
+  neurologicalExam?: NeurologicalExam;
+  assessment?: string;
+  plan?: string;
 }
 
 export interface Patient {
