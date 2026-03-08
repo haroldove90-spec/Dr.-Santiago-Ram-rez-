@@ -10,6 +10,7 @@ import { es } from 'date-fns/locale';
 import { useNotification } from '@/context/NotificationContext';
 import { usePatients } from '@/context/PatientContext';
 import { useRole } from '@/context/RoleContext';
+import { cn } from '@/lib/utils';
 import jsPDF from 'jspdf';
 
 export function PatientDetail() {
