@@ -55,14 +55,14 @@ export function Header({ onMenuClick }: HeaderProps) {
           </div>
           <input
             type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md leading-5 bg-slate-50 placeholder-slate-500 focus:outline-none focus:placeholder-slate-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm transition duration-150 ease-in-out"
+            className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md leading-5 bg-slate-50 placeholder-slate-500 focus:outline-none focus:placeholder-slate-400 focus:ring-1 focus:ring-[#215732] focus:border-[#215732] sm:text-sm transition duration-150 ease-in-out"
             placeholder="Buscar pacientes (Nombre, Historia Clínica)..."
           />
         </div>
       </div>
       <div className="flex items-center space-x-4">
         {role === 'assistant' && (
-          <span className="hidden md:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          <span className="hidden md:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#215732]/10 text-[#215732]">
             Modo Asistente
           </span>
         )}
@@ -70,7 +70,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         {deferredPrompt && (
           <button
             onClick={handleInstallClick}
-            className="p-2 text-green-600 hover:text-green-700 bg-green-50 rounded-full transition-colors"
+            className="p-2 text-[#215732] hover:text-[#215732]/80 bg-[#215732]/10 rounded-full transition-colors"
             title="Instalar Aplicación"
           >
             <Download className="h-6 w-6" />

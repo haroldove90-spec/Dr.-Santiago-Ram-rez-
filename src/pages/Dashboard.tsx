@@ -33,7 +33,7 @@ export function Dashboard() {
   const statCards = [
     { name: 'Total de Pacientes', value: stats?.totalPatients || 0, change: 'Activos', icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
     { name: 'Alertas Críticas', value: stats?.criticalAlerts || 0, change: 'Urgente', icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-100' },
-    { name: 'Escalas Recientes', value: stats?.recentScales || 0, change: 'Últimos 7 días', icon: Activity, color: 'text-green-600', bg: 'bg-green-100' },
+    { name: 'Escalas Recientes', value: stats?.recentScales || 0, change: 'Últimos 7 días', icon: Activity, color: 'text-[#215732]', bg: 'bg-[#215732]/10' },
     { name: 'Citas Hoy', value: '8', change: 'En curso', icon: Calendar, color: 'text-purple-600', bg: 'bg-purple-100' },
   ];
 
@@ -69,7 +69,7 @@ export function Dashboard() {
         <div className="rounded-xl bg-white shadow-sm border border-slate-100">
           <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between">
             <h3 className="text-base font-semibold leading-6 text-slate-900">Pacientes Recientes</h3>
-            <Link to="/patients" className="text-sm font-medium text-green-600 hover:text-green-500 flex items-center">
+            <Link to="/patients" className="text-sm font-medium text-[#215732] hover:text-[#215732]/80 flex items-center">
               Ver todos <ArrowRight className="ml-1 w-4 h-4" />
             </Link>
           </div>
@@ -88,7 +88,7 @@ export function Dashboard() {
                           {patient.alerts[0]}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800">
+                        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-[#215732]/10 text-[#215732]">
                           Estable
                         </span>
                       )}
@@ -107,8 +107,8 @@ export function Dashboard() {
         <div className="rounded-xl bg-white shadow-sm border border-slate-100 p-6">
           <h3 className="text-base font-semibold leading-6 text-slate-900 mb-4">Acciones Rápidas</h3>
           <div className="grid grid-cols-1 gap-4">
-            <Link to="/dictation" className="flex items-center p-4 rounded-lg border border-slate-200 hover:border-green-500 hover:bg-green-50 transition-all cursor-pointer group">
-              <div className="p-3 rounded-full bg-green-100 text-green-600 group-hover:bg-green-200">
+            <Link to="/dictation" className="flex items-center p-4 rounded-lg border border-slate-200 hover:border-[#215732] hover:bg-[#215732]/5 transition-all cursor-pointer group">
+              <div className="p-3 rounded-full bg-[#215732]/10 text-[#215732] group-hover:bg-[#215732]/20">
                 <Activity className="h-6 w-6" />
               </div>
               <div className="ml-4">
