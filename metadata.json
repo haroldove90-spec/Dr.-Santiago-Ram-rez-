@@ -1,0 +1,5 @@
+{
+  "name": "NeuroFlow Clinical Dashboard",
+  "description": "A specialized clinical dashboard for neurologists featuring patient management, clinical scales, and AI-powered voice dictation.",
+  "requestFramePermissions": ["microphone"]
+}

@@ -1,0 +1,201 @@
+import React, { useState } from 'react';
+import { Mic, Square, Save, Loader2, FileJson, AlertCircle } from 'lucide-react';
+
+export function Dictation() {
+  const [isRecording, setIsRecording] = useState(false);
+  const [transcript, setTranscript] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [structuredData, setStructuredData] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [patients, setPatients] = useState<any[]>([]);
+  const [selectedPatientId, setSelectedPatientId] = useState<string>('');
+  const [saving, setSaving] = useState(false);
+
+  React.useEffect(() => {
+    fetch('/api/patients')
+      .then(res => res.json())
+      .then(data => setPatients(data))
+      .catch(err => console.error(err));
+  }, []);
+
+  const saveToRecord = async () => {
+    if (!selectedPatientId || !structuredData) return;
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/patients/${selectedPatientId}/history`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          history: {
+            chiefComplaint: structuredData.chiefComplaint,
+            historyOfPresentIllness: structuredData.historyOfPresentIllness
+          },
+          medications: structuredData.medications,
+          alerts: structuredData.suggestedAlerts
+        })
+      });
+
+      if (response.ok) {
+        alert('Successfully updated patient record!');
+        setStructuredData(null);
+        setTranscript('');
+        setSelectedPatientId('');
+      } else {
+        throw new Error('Failed to save');
+      }
+    } catch (err) {
+      alert('Error saving to record');
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // In a real app, we would use the Web Speech API here.
+  // For this demo, we'll simulate the recording part or allow manual text entry.
+  const toggleRecording = () => {
+    setIsRecording(!isRecording);
+    if (!isRecording) {
+      // Start recording simulation
+      setError(null);
+    } else {
+      // Stop recording simulation
+      // Pre-fill with a realistic clinical example if empty
+      if (!transcript) {
+        setTranscript("Patient is a 65-year-old male presenting with sudden onset right-sided weakness and slurred speech starting 2 hours ago. History of hypertension and atrial fibrillation. Current medications include Metoprolol 50mg twice daily. BP is 160/95. NIHSS score appears to be around 12. Recommend immediate CT head and CTA.");
+      }
+    }
+  };
+
+  const processDictation = async () => {
+    setIsProcessing(true);
+    setError(null);
+    setStructuredData(null);
+
+    try {
+      const response = await fetch('/api/dictation/process', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ transcript }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to process dictation');
+      }
+
+      const data = await response.json();
+      setStructuredData(data);
+    } catch (err) {
+      setError('Error processing dictation. Please try again.');
+      console.error(err);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="bg-white shadow-sm border border-slate-200 rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">AI Voice Dictation</h2>
+        <p className="text-sm text-slate-500 mb-6">
+          Record your clinical notes. AI will transcribe and structure the data automatically.
+        </p>
+
+        <div className="flex justify-center mb-8">
+          <button
+            onClick={toggleRecording}
+            className={`relative rounded-full p-8 transition-all duration-200 ${
+              isRecording 
+                ? 'bg-red-100 text-red-600 ring-4 ring-red-50 animate-pulse' 
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            {isRecording ? <Square className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">Live Transcript (Editable)</label>
+          <textarea
+            className="w-full h-32 p-4 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none font-mono text-sm"
+            placeholder="Transcript will appear here... (or type manually)"
+            value={transcript}
+            onChange={(e) => setTranscript(e.target.value)}
+          />
+        </div>
+
+        {error && (
+          <div className="rounded-md bg-red-50 p-4 mt-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <AlertCircle className="h-5 w-5 text-red-400" aria-hidden="true" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Processing Error</h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <p>{error}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={processDictation}
+            disabled={!transcript || isProcessing}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
+                Processing with Gemini...
+              </>
+            ) : (
+              <>
+                <FileJson className="-ml-1 mr-2 h-4 w-4" />
+                Process & Structure Data
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {structuredData && (
+        <div className="bg-slate-50 shadow-sm border border-slate-200 rounded-xl p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
+            <FileJson className="h-5 w-5 mr-2 text-emerald-600" />
+            Structured Data Preview
+          </h3>
+          <div className="bg-slate-900 rounded-lg p-4 overflow-x-auto">
+            <pre className="text-emerald-400 text-xs font-mono">
+              {JSON.stringify(structuredData, null, 2)}
+            </pre>
+          </div>
+          <div className="mt-4 flex justify-end items-center space-x-4">
+             <select
+               className="block rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm p-2 border"
+               value={selectedPatientId}
+               onChange={(e) => setSelectedPatientId(e.target.value)}
+             >
+               <option value="">-- Select Patient to Update --</option>
+               {patients.map(p => (
+                 <option key={p.id} value={p.id}>{p.lastName}, {p.firstName}</option>
+               ))}
+             </select>
+             <button
+              className="inline-flex items-center px-4 py-2 border border-slate-300 shadow-sm text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50"
+              onClick={saveToRecord}
+              disabled={!selectedPatientId || saving}
+            >
+              <Save className="-ml-1 mr-2 h-4 w-4 text-slate-500" />
+              {saving ? 'Saving...' : 'Confirm & Save to Record'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
