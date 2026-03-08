@@ -6,9 +6,11 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useNotification } from '@/context/NotificationContext';
 import { usePatients } from '@/context/PatientContext';
+import { useRole } from '@/context/RoleContext';
 
 export function Patients() {
   const { patients, addPatient } = usePatients();
+  const { role } = useRole();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { addNotification } = useNotification();
@@ -78,8 +80,12 @@ export function Patients() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Gestión de Pacientes</h1>
-          <p className="text-sm text-slate-500">Ver y administrar expedientes de pacientes.</p>
+          <h1 className="text-2xl font-bold text-slate-900">
+            {role === 'doctor' ? 'Historial Clínico' : 'Gestión de Pacientes'}
+          </h1>
+          <p className="text-sm text-slate-500">
+            {role === 'doctor' ? 'Consultar y registrar historiales clínicos de pacientes.' : 'Ver y administrar expedientes de pacientes.'}
+          </p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}

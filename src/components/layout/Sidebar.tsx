@@ -49,7 +49,12 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
             return ['Inicio', 'Agenda', 'Pacientes', 'Reportes', 'Configuración'].includes(item.name);
           }
           return true;
-        }).map((item) => (
+        }).map((item) => {
+          let displayName = item.name;
+          if (role === 'doctor' && item.name === 'Pacientes') {
+            displayName = 'Historial Clínico';
+          }
+          return (
           <NavLink
             key={item.name}
             to={item.href}
@@ -67,9 +72,9 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
               className="mr-3 h-5 w-5 flex-shrink-0 text-white/60 group-hover:text-white transition-colors"
               aria-hidden="true"
             />
-            {item.name}
+            {displayName}
           </NavLink>
-        ))}
+        )})}
       </nav>
       
       {/* Role Switcher for Demo */}
