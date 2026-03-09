@@ -73,11 +73,11 @@ export function Patients() {
     }
   };
 
-  const filteredPatients = patients.filter(patient => 
-    patient.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.mrn.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredPatients = Array.isArray(patients) ? patients.filter(patient => 
+    (patient.lastName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (patient.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (patient.mrn || '').toLowerCase().includes(searchTerm.toLowerCase())
+  ) : [];
 
   return (
     <div className="space-y-6">

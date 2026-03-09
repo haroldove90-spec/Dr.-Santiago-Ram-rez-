@@ -18,14 +18,15 @@ export function Dashboard() {
   }, [fetchRecentScalesCount]);
 
   const stats = useMemo(() => {
-    if (!patients) return null;
+    if (!patients || !Array.isArray(patients)) return { totalPatients: 0, criticalAlerts: 0, recentPatients: [] };
 
     const totalPatients = patients.length;
     const criticalAlerts = patients.filter(p => 
-      p.alerts && p.alerts.some(a => a.toLowerCase().includes('high stroke risk') || a.toLowerCase().includes('crítico'))
+      p.alerts && Array.isArray(p.alerts) && p.alerts.some(a => typeof a === 'string' && (a.toLowerCase().includes('high stroke risk') || a.toLowerCase().includes('crítico')))
     ).length;
     
     const recentPatients = [...patients]
+      .filter(p => p.lastVisit)
       .sort((a, b) => new Date(b.lastVisit).getTime() - new Date(a.lastVisit).getTime())
       .slice(0, 5);
 

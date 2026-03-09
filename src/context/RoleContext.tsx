@@ -14,29 +14,49 @@ const RoleContext = createContext<RoleContextType | undefined>(undefined);
 
 export function RoleProvider({ children }: { children: ReactNode }) {
   const [role, setRoleState] = useState<Role>(() => {
-    const savedRole = localStorage.getItem('userRole');
-    return (savedRole as Role) || 'doctor';
+    try {
+      const savedRole = localStorage.getItem('userRole');
+      return (savedRole as Role) || 'doctor';
+    } catch (e) {
+      return 'doctor';
+    }
   });
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('isAuthenticated') === 'true';
+    try {
+      return localStorage.getItem('isAuthenticated') === 'true';
+    } catch (e) {
+      return false;
+    }
   });
 
   const setRole = (newRole: Role) => {
     setRoleState(newRole);
-    localStorage.setItem('userRole', newRole);
+    try {
+      localStorage.setItem('userRole', newRole);
+    } catch (e) {
+      console.warn('Could not save role to localStorage', e);
+    }
   };
 
   const login = (selectedRole: Role) => {
     setRole(selectedRole);
     setIsAuthenticated(true);
-    localStorage.setItem('isAuthenticated', 'true');
-    localStorage.setItem('userRole', selectedRole);
+    try {
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('userRole', selectedRole);
+    } catch (e) {
+      console.warn('Could not save auth state to localStorage', e);
+    }
   };
 
   const logout = () => {
     setIsAuthenticated(false);
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('userRole');
+    try {
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('userRole');
+    } catch (e) {
+      console.warn('Could not remove auth state from localStorage', e);
+    }
   };
 
   return (

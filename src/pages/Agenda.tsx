@@ -181,10 +181,10 @@ export function Agenda() {
     setHistoryModal({ isOpen: false, patientId: '', patientName: '' });
   };
 
-  const filteredAppointments = appointments.filter(apt => 
-    apt.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    apt.type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredAppointments = Array.isArray(appointments) ? appointments.filter(apt => 
+    (apt.patientName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (apt.type || '').toLowerCase().includes(searchTerm.toLowerCase())
+  ) : [];
 
   return (
     <div className="space-y-6">
