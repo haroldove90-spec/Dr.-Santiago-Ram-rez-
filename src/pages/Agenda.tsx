@@ -53,22 +53,25 @@ export function Agenda() {
   });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [historyModal, setHistoryModal] = useState<{isOpen: boolean, patientId: string, patientName: string}>({ isOpen: false, patientId: '', patientName: '' });
 
   const handleAddAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAppointment.date || !newAppointment.time) return;
+    
+    setIsSubmitting(true);
+    try {
+      let patientId = newAppointment.patientId;
+      let patientName = '';
 
-    let patientId = newAppointment.patientId;
-    let patientName = '';
+      if (isNewPatient) {
+        if (!newPatientData.firstName || !newPatientData.lastName || !newPatientData.mrn) {
+          alert('Por favor complete los datos del nuevo paciente.');
+          setIsSubmitting(false);
+          return;
+        }
 
-    if (isNewPatient) {
-      if (!newPatientData.firstName || !newPatientData.lastName || !newPatientData.mrn) {
-        alert('Por favor complete los datos del nuevo paciente.');
-        return;
-      }
-
-      try {
         const createdPatient = await addPatient({
           id: '',
           firstName: newPatientData.firstName,
@@ -96,35 +99,43 @@ export function Agenda() {
         } else {
           throw new Error('Error al crear el paciente');
         }
-      } catch (error) {
-        addNotification('Error', 'No se pudo registrar al nuevo paciente.');
-        return;
+      } else {
+        if (!patientId) {
+          setIsSubmitting(false);
+          return;
+        }
+        const patient = getPatientById(patientId);
+        if (!patient) {
+          setIsSubmitting(false);
+          return;
+        }
+        patientName = `${patient.lastName}, ${patient.firstName}`;
       }
-    } else {
-      if (!patientId) return;
-      const patient = getPatientById(patientId);
-      if (!patient) return;
-      patientName = `${patient.lastName}, ${patient.firstName}`;
+
+      const date = new Date(`${newAppointment.date}T${newAppointment.time}`);
+      const appointment: Appointment = {
+        id: Date.now().toString(),
+        patientId: patientId,
+        patientName: patientName,
+        date: date,
+        type: newAppointment.type,
+        cost: Number(newAppointment.cost) || 0,
+        status: 'scheduled'
+      };
+
+      setAppointments([...appointments, appointment]);
+      addNotification('Nueva Cita Agendada', `Cita para ${appointment.patientName} el ${format(date, 'dd/MM/yyyy HH:mm')}`);
+      
+      setNewAppointment({ patientId: '', date: '', time: '', type: 'Consulta General', cost: '' });
+      setNewPatientData({ firstName: '', lastName: '', mrn: '', dateOfBirth: '', gender: 'male' });
+      setIsNewPatient(false);
+      setIsModalOpen(false);
+    } catch (error: any) {
+      console.error('Error registering patient:', error);
+      addNotification('Error', `No se pudo registrar al nuevo paciente: ${error.message || 'Error desconocido'}`);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const date = new Date(`${newAppointment.date}T${newAppointment.time}`);
-    const appointment: Appointment = {
-      id: Date.now().toString(),
-      patientId: patientId,
-      patientName: patientName,
-      date: date,
-      type: newAppointment.type,
-      cost: Number(newAppointment.cost) || 0,
-      status: 'scheduled'
-    };
-
-    setAppointments([...appointments, appointment]);
-    addNotification('Nueva Cita Agendada', `Cita para ${appointment.patientName} el ${format(date, 'dd/MM/yyyy HH:mm')}`);
-    
-    setNewAppointment({ patientId: '', date: '', time: '', type: 'Consulta General', cost: '' });
-    setNewPatientData({ firstName: '', lastName: '', mrn: '', dateOfBirth: '', gender: 'male' });
-    setIsNewPatient(false);
-    setIsModalOpen(false);
   };
 
   const updateStatus = (id: string, status: Appointment['status']) => {
@@ -441,10 +452,20 @@ export function Agenda() {
                   </div>
                   <button
                     type="submit"
-                    className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#215732] hover:bg-[#1a4528] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                    disabled={isSubmitting}
+                    className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#215732] hover:bg-[#1a4528] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Check className="h-4 w-4 mr-2" />
-                    Agendar Cita
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                        Procesando...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-4 w-4 mr-2" />
+                        Agendar Cita
+                      </>
+                    )}
                   </button>
                 </form>
               </div>

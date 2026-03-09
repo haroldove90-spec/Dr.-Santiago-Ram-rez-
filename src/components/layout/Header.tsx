@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Search, Menu, Download, User, FileText } from 'lucide-react';
+import { Bell, Search, Menu, User, FileText } from 'lucide-react';
 import { useNotification } from '@/context/NotificationContext';
 import { useRole } from '@/context/RoleContext';
 import { usePatients } from '@/context/PatientContext';
@@ -15,7 +15,6 @@ export function Header({ onMenuClick }: HeaderProps) {
   const { patients } = usePatients();
   const navigate = useNavigate();
   const unreadCount = notifications.filter(n => !n.read).length;
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   
   // Search State
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,13 +22,6 @@ export function Header({ onMenuClick }: HeaderProps) {
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    
     // Click outside to close search results
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -39,24 +31,9 @@ export function Header({ onMenuClick }: HeaderProps) {
     document.addEventListener('mousedown', handleClickOutside);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-
-  const handleInstallClick = () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then((choiceResult: any) => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('User accepted the install prompt');
-        } else {
-          console.log('User dismissed the install prompt');
-        }
-        setDeferredPrompt(null);
-      });
-    }
-  };
 
   // Search Logic
   const filteredPatients = patients.filter(patient => {
@@ -147,16 +124,6 @@ export function Header({ onMenuClick }: HeaderProps) {
           </span>
         )}
         
-        {deferredPrompt && (
-          <button
-            onClick={handleInstallClick}
-            className="p-2 text-[#215732] hover:text-[#215732]/80 bg-[#215732]/10 rounded-full transition-colors"
-            title="Instalar Aplicación"
-          >
-            <Download className="h-6 w-6" />
-          </button>
-        )}
-
         <button 
           onClick={requestPermission}
           className="p-2 text-slate-400 hover:text-slate-500 relative"

@@ -13,16 +13,30 @@ interface RoleContextType {
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
 
 export function RoleProvider({ children }: { children: ReactNode }) {
-  const [role, setRole] = useState<Role>('doctor');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [role, setRoleState] = useState<Role>(() => {
+    const savedRole = localStorage.getItem('userRole');
+    return (savedRole as Role) || 'doctor';
+  });
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('isAuthenticated') === 'true';
+  });
+
+  const setRole = (newRole: Role) => {
+    setRoleState(newRole);
+    localStorage.setItem('userRole', newRole);
+  };
 
   const login = (selectedRole: Role) => {
     setRole(selectedRole);
     setIsAuthenticated(true);
+    localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem('userRole', selectedRole);
   };
 
   const logout = () => {
     setIsAuthenticated(false);
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('userRole');
   };
 
   return (

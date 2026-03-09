@@ -64,6 +64,7 @@ export function PatientProvider({ children }: { children: ReactNode }) {
 
   const addPatient = async (patient: Patient): Promise<Patient | null> => {
     try {
+      console.log('Attempting to add patient:', patient);
       const { data, error } = await supabase
         .from('patients')
         .insert([{
@@ -80,7 +81,10 @@ export function PatientProvider({ children }: { children: ReactNode }) {
         }])
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error adding patient:', error);
+        throw error;
+      }
       if (data && data[0]) {
         await fetchPatients();
         const p = data[0];

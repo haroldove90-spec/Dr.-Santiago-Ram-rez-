@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { Outlet } from 'react-router-dom';
+import { PWAInstallPrompt } from './PWAInstallPrompt';
 
 export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -14,6 +15,7 @@ export function Layout() {
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 scroll-smooth">
           <Outlet />
         </main>
+        <PWAInstallPrompt />
         {/* Mobile overlay */}
         {sidebarOpen && (
           <div 
