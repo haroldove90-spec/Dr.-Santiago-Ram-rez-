@@ -20,13 +20,21 @@ interface Appointment {
 export function Agenda() {
   const { role } = useRole();
   const { addNotification } = useNotification();
-  const { patients, getPatientById } = usePatients();
+  const { patients, getPatientById, addPatient } = usePatients();
   const navigate = useNavigate();
   
   // Initialize with some mock appointments linked to the first mock patient if available
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isNewPatient, setIsNewPatient] = useState(false);
 
+  const [newPatientData, setNewPatientData] = useState({
+    firstName: '',
+    lastName: '',
+    mrn: '',
+    dateOfBirth: '',
+    gender: 'male' as 'male' | 'female' | 'other'
+  });
   useEffect(() => {
     if (patients.length > 0 && appointments.length === 0) {
       setAppointments([
@@ -47,18 +55,63 @@ export function Agenda() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [historyModal, setHistoryModal] = useState<{isOpen: boolean, patientId: string, patientName: string}>({ isOpen: false, patientId: '', patientName: '' });
 
-  const handleAddAppointment = (e: React.FormEvent) => {
+  const handleAddAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAppointment.patientId || !newAppointment.date || !newAppointment.time) return;
+    if (!newAppointment.date || !newAppointment.time) return;
 
-    const patient = getPatientById(newAppointment.patientId);
-    if (!patient) return;
+    let patientId = newAppointment.patientId;
+    let patientName = '';
+
+    if (isNewPatient) {
+      if (!newPatientData.firstName || !newPatientData.lastName || !newPatientData.mrn) {
+        alert('Por favor complete los datos del nuevo paciente.');
+        return;
+      }
+
+      try {
+        const createdPatient = await addPatient({
+          id: '',
+          firstName: newPatientData.firstName,
+          lastName: newPatientData.lastName,
+          mrn: newPatientData.mrn,
+          dateOfBirth: newPatientData.dateOfBirth || new Date().toISOString().split('T')[0],
+          gender: newPatientData.gender,
+          contact: { phone: '', email: '', emergencyContact: '' },
+          history: {
+            chiefComplaint: '',
+            pastMedicalHistory: [],
+            familyHistory: [],
+            socialHistory: ''
+          },
+          medications: [],
+          clinicalScales: [],
+          imagingStudies: [],
+          lastVisit: new Date().toISOString(),
+          alerts: []
+        });
+
+        if (createdPatient) {
+          patientId = createdPatient.id;
+          patientName = `${createdPatient.lastName}, ${createdPatient.firstName}`;
+        } else {
+          throw new Error('Error al crear el paciente');
+        }
+      } catch (error) {
+        addNotification('Error', 'No se pudo registrar al nuevo paciente.');
+        return;
+      }
+    } else {
+      if (!patientId) return;
+      const patient = getPatientById(patientId);
+      if (!patient) return;
+      patientName = `${patient.lastName}, ${patient.firstName}`;
+    }
 
     const date = new Date(`${newAppointment.date}T${newAppointment.time}`);
     const appointment: Appointment = {
       id: Date.now().toString(),
-      patientId: patient.id,
-      patientName: `${patient.lastName}, ${patient.firstName}`,
+      patientId: patientId,
+      patientName: patientName,
       date: date,
       type: newAppointment.type,
       cost: Number(newAppointment.cost) || 0,
@@ -69,6 +122,8 @@ export function Agenda() {
     addNotification('Nueva Cita Agendada', `Cita para ${appointment.patientName} el ${format(date, 'dd/MM/yyyy HH:mm')}`);
     
     setNewAppointment({ patientId: '', date: '', time: '', type: 'Consulta General', cost: '' });
+    setNewPatientData({ firstName: '', lastName: '', mrn: '', dateOfBirth: '', gender: 'male' });
+    setIsNewPatient(false);
     setIsModalOpen(false);
   };
 
@@ -249,8 +304,77 @@ export function Agenda() {
                 </div>
 
                 <form onSubmit={handleAddAppointment} className="space-y-4">
-                  <div>
+                  <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700">Paciente</label>
+                    <button
+                      type="button"
+                      onClick={() => setIsNewPatient(!isNewPatient)}
+                      className="text-xs font-semibold text-[#215732] hover:underline"
+                    >
+                      {isNewPatient ? 'Seleccionar existente' : 'Registrar nuevo paciente'}
+                    </button>
+                  </div>
+
+                  {isNewPatient ? (
+                    <div className="space-y-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-slate-500">Nombre(s)</label>
+                          <input
+                            type="text"
+                            required
+                            className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-[#215732] focus:ring-[#215732] sm:text-sm p-2 border"
+                            value={newPatientData.firstName}
+                            onChange={e => setNewPatientData({...newPatientData, firstName: e.target.value})}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-slate-500">Apellido(s)</label>
+                          <input
+                            type="text"
+                            required
+                            className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-[#215732] focus:ring-[#215732] sm:text-sm p-2 border"
+                            value={newPatientData.lastName}
+                            onChange={e => setNewPatientData({...newPatientData, lastName: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-slate-500">Historia Clínica (MRN)</label>
+                          <input
+                            type="text"
+                            required
+                            className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-[#215732] focus:ring-[#215732] sm:text-sm p-2 border"
+                            value={newPatientData.mrn}
+                            onChange={e => setNewPatientData({...newPatientData, mrn: e.target.value})}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-slate-500">Género</label>
+                          <select
+                            className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-[#215732] focus:ring-[#215732] sm:text-sm p-2 border bg-white"
+                            value={newPatientData.gender}
+                            onChange={e => setNewPatientData({...newPatientData, gender: e.target.value as any})}
+                          >
+                            <option value="male">Masculino</option>
+                            <option value="female">Femenino</option>
+                            <option value="other">Otro</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500">Fecha de Nacimiento</label>
+                        <input
+                          type="date"
+                          required
+                          className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-[#215732] focus:ring-[#215732] sm:text-sm p-2 border"
+                          value={newPatientData.dateOfBirth}
+                          onChange={e => setNewPatientData({...newPatientData, dateOfBirth: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                  ) : (
                     <select
                       required
                       className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-[#215732] focus:ring-[#215732] sm:text-sm p-2 border bg-white"
@@ -262,7 +386,7 @@ export function Agenda() {
                         <option key={p.id} value={p.id}>{p.lastName}, {p.firstName} (HC: {p.mrn})</option>
                       ))}
                     </select>
-                  </div>
+                  )}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-700">Fecha</label>

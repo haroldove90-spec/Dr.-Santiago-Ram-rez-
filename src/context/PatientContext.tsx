@@ -6,7 +6,7 @@ import { subDays } from 'date-fns';
 interface PatientContextType {
   patients: Patient[];
   loading: boolean;
-  addPatient: (patient: Patient) => Promise<void>;
+  addPatient: (patient: Patient) => Promise<Patient | null>;
   updatePatient: (id: string, updatedPatient: Partial<Patient>) => Promise<void>;
   deletePatient: (id: string) => Promise<void>;
   getPatientById: (id: string) => Patient | undefined;
@@ -62,7 +62,7 @@ export function PatientProvider({ children }: { children: ReactNode }) {
     fetchPatients();
   }, []);
 
-  const addPatient = async (patient: Patient) => {
+  const addPatient = async (patient: Patient): Promise<Patient | null> => {
     try {
       const { data, error } = await supabase
         .from('patients')
@@ -81,9 +81,27 @@ export function PatientProvider({ children }: { children: ReactNode }) {
         .select();
 
       if (error) throw error;
-      if (data) {
+      if (data && data[0]) {
         await fetchPatients();
+        const p = data[0];
+        return {
+          id: p.id,
+          firstName: p.first_name,
+          lastName: p.last_name,
+          dateOfBirth: p.date_of_birth,
+          gender: p.gender as any,
+          mrn: p.mrn,
+          lastVisit: p.last_visit,
+          nextAppointment: p.next_appointment,
+          contact: p.contact,
+          history: p.history,
+          alerts: p.alerts || [],
+          medications: [],
+          clinicalScales: [],
+          imagingStudies: []
+        };
       }
+      return null;
     } catch (e) {
       console.error('Error adding patient to Supabase', e);
       throw e;

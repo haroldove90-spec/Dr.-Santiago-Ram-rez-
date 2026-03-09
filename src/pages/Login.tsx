@@ -12,9 +12,19 @@ export function Login() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Demo login: accept any credentials
-    login(selectedRole);
-    navigate('/');
+    
+    const isDoctor = username === 'noe_santiago' && password === 'prueba123';
+    const isAssistant = username === 'asistente' && password === 'Prueba123';
+
+    if (isDoctor) {
+      login('doctor');
+      navigate('/');
+    } else if (isAssistant) {
+      login('assistant');
+      navigate('/');
+    } else {
+      alert('Credenciales incorrectas. Por favor verifique su usuario y contraseña.');
+    }
   };
 
   return (
