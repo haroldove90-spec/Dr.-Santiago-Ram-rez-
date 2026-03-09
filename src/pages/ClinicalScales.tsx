@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Save, Calculator, CheckCircle } from 'lucide-react';
-import { Patient } from '@/types/patient';
+import React, { useState } from 'react';
+import { Save, CheckCircle } from 'lucide-react';
+import { usePatients } from '@/context/PatientContext';
 
 const nihssQuestions = [
   { id: '1a', label: '1a. Nivel de Conciencia', options: [{ val: 0, text: 'Alerta' }, { val: 1, text: 'Somnoliento' }, { val: 2, text: 'Obnubilado' }, { val: 3, text: 'Coma' }] },
@@ -21,18 +21,11 @@ const nihssQuestions = [
 ];
 
 export function ClinicalScales() {
-  const [patients, setPatients] = useState<Patient[]>([]);
+  const { patients, addClinicalScale } = usePatients();
   const [selectedPatientId, setSelectedPatientId] = useState<string>('');
   const [scores, setScores] = useState<Record<string, number>>({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    fetch('/api/patients')
-      .then(res => res.json())
-      .then(data => setPatients(data))
-      .catch(err => console.error(err));
-  }, []);
 
   const handleScoreChange = (id: string, val: number) => {
     setScores(prev => ({ ...prev, [id]: val }));
@@ -44,25 +37,18 @@ export function ClinicalScales() {
     if (!selectedPatientId) return alert('Por favor seleccione un paciente');
     setSaving(true);
     try {
-      const response = await fetch('/api/scales', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          patientId: selectedPatientId,
-          name: 'NIHSS',
-          score: totalScore,
-          date: new Date().toISOString(),
-          notes: 'Evaluación de rutina',
-          details: scores
-        })
+      await addClinicalScale(selectedPatientId, {
+        name: 'NIHSS',
+        score: totalScore,
+        date: new Date().toISOString(),
+        notes: 'Evaluación de rutina',
+        details: scores
       });
 
-      if (response.ok) {
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
-        setScores({});
-        setSelectedPatientId('');
-      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+      setScores({});
+      setSelectedPatientId('');
     } catch (error) {
       console.error('Error saving scale:', error);
       alert('Error al guardar la escala');

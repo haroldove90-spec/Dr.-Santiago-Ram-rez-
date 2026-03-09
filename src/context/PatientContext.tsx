@@ -1,97 +1,320 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Patient } from '../types/patient';
+import { supabase } from '../lib/supabase';
+import { subDays } from 'date-fns';
 
 interface PatientContextType {
   patients: Patient[];
-  addPatient: (patient: Patient) => void;
-  updatePatient: (id: string, updatedPatient: Partial<Patient>) => void;
-  deletePatient: (id: string) => void;
+  loading: boolean;
+  addPatient: (patient: Patient) => Promise<void>;
+  updatePatient: (id: string, updatedPatient: Partial<Patient>) => Promise<void>;
+  deletePatient: (id: string) => Promise<void>;
   getPatientById: (id: string) => Patient | undefined;
+  refreshPatients: () => Promise<void>;
+  saveDictationResult: (patientId: string, data: any) => Promise<void>;
+  addClinicalScale: (patientId: string, scaleData: any) => Promise<void>;
+  fetchPatientDetails: (id: string) => Promise<Patient | null>;
+  fetchRecentScalesCount: (days?: number) => Promise<number>;
 }
 
 const PatientContext = createContext<PatientContextType | undefined>(undefined);
 
-const MOCK_PATIENTS: Patient[] = [
-  {
-    id: '1',
-    firstName: 'Maria',
-    lastName: 'Garcia',
-    dateOfBirth: '1985-04-12',
-    gender: 'female',
-    mrn: 'HC-2024-001',
-    lastVisit: '2024-03-01',
-    contact: { phone: '555-0101', email: 'maria@email.com', emergencyContact: 'Juan Garcia' },
-    history: {
-      chiefComplaint: 'Dolor de cabeza crónico',
-      historyOfPresentIllness: 'Paciente refiere cefalea de 3 meses de evolución...',
-      pastMedicalHistory: ['Hipertensión'],
-      familyHistory: ['Madre con migraña'],
-      socialHistory: 'No fuma, bebe ocasionalmente.'
-    },
-    medications: [],
-    clinicalScales: [],
-    imagingStudies: [],
-    alerts: []
-  },
-  {
-    id: '2',
-    firstName: 'Jose',
-    lastName: 'Rodriguez',
-    dateOfBirth: '1978-09-23',
-    gender: 'male',
-    mrn: 'HC-2024-002',
-    lastVisit: '2024-02-15',
-    contact: { phone: '555-0102', email: 'jose@email.com', emergencyContact: 'Ana Rodriguez' },
-    history: {
-      chiefComplaint: 'Pérdida de memoria a corto plazo',
-      historyOfPresentIllness: 'Paciente acude por olvidos frecuentes...',
-      pastMedicalHistory: [],
-      familyHistory: [],
-      socialHistory: ''
-    },
-    medications: [],
-    clinicalScales: [],
-    imagingStudies: [],
-    alerts: []
-  }
-];
-
 export function PatientProvider({ children }: { children: ReactNode }) {
-  const [patients, setPatients] = useState<Patient[]>(() => {
-    const saved = localStorage.getItem('neuroflow_patients');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Error parsing patients from local storage', e);
-        return MOCK_PATIENTS;
-      }
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchPatients = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('patients')
+        .select('*')
+        .order('last_visit', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedPatients: Patient[] = (data || []).map(p => ({
+        id: p.id,
+        firstName: p.first_name,
+        lastName: p.last_name,
+        dateOfBirth: p.date_of_birth,
+        gender: p.gender as any,
+        mrn: p.mrn,
+        lastVisit: p.last_visit,
+        nextAppointment: p.next_appointment,
+        contact: p.contact,
+        history: p.history,
+        alerts: p.alerts || [],
+        medications: [], // Will be fetched separately if needed or joined
+        clinicalScales: [],
+        imagingStudies: []
+      }));
+
+      setPatients(formattedPatients);
+    } catch (e) {
+      console.error('Error fetching patients from Supabase', e);
+    } finally {
+      setLoading(false);
     }
-    return MOCK_PATIENTS;
-  });
+  };
 
   useEffect(() => {
-    localStorage.setItem('neuroflow_patients', JSON.stringify(patients));
-  }, [patients]);
+    fetchPatients();
+  }, []);
 
-  const addPatient = (patient: Patient) => {
-    setPatients(prev => [patient, ...prev]);
+  const addPatient = async (patient: Patient) => {
+    try {
+      const { data, error } = await supabase
+        .from('patients')
+        .insert([{
+          mrn: patient.mrn,
+          first_name: patient.firstName,
+          last_name: patient.lastName,
+          date_of_birth: patient.dateOfBirth,
+          gender: patient.gender,
+          contact: patient.contact,
+          history: patient.history,
+          last_visit: patient.lastVisit,
+          next_appointment: patient.nextAppointment,
+          alerts: patient.alerts
+        }])
+        .select();
+
+      if (error) throw error;
+      if (data) {
+        await fetchPatients();
+      }
+    } catch (e) {
+      console.error('Error adding patient to Supabase', e);
+      throw e;
+    }
   };
 
-  const updatePatient = (id: string, updatedFields: Partial<Patient>) => {
-    setPatients(prev => prev.map(p => p.id === id ? { ...p, ...updatedFields } : p));
+  const updatePatient = async (id: string, updatedFields: Partial<Patient>) => {
+    try {
+      const updateData: any = {};
+      if (updatedFields.firstName) updateData.first_name = updatedFields.firstName;
+      if (updatedFields.lastName) updateData.last_name = updatedFields.lastName;
+      if (updatedFields.dateOfBirth) updateData.date_of_birth = updatedFields.dateOfBirth;
+      if (updatedFields.gender) updateData.gender = updatedFields.gender;
+      if (updatedFields.mrn) updateData.mrn = updatedFields.mrn;
+      if (updatedFields.lastVisit) updateData.last_visit = updatedFields.lastVisit;
+      if (updatedFields.nextAppointment) updateData.next_appointment = updatedFields.nextAppointment;
+      if (updatedFields.contact) updateData.contact = updatedFields.contact;
+      if (updatedFields.history) updateData.history = updatedFields.history;
+      if (updatedFields.alerts) updateData.alerts = updatedFields.alerts;
+
+      const { error } = await supabase
+        .from('patients')
+        .update(updateData)
+        .eq('id', id);
+
+      if (error) throw error;
+      await fetchPatients();
+    } catch (e) {
+      console.error('Error updating patient in Supabase', e);
+      throw e;
+    }
   };
 
-  const deletePatient = (id: string) => {
-    setPatients(prev => prev.filter(p => p.id !== id));
+  const deletePatient = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('patients')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      setPatients(prev => prev.filter(p => p.id !== id));
+    } catch (e) {
+      console.error('Error deleting patient from Supabase', e);
+      throw e;
+    }
   };
 
   const getPatientById = (id: string) => {
     return patients.find(p => p.id === id);
   };
 
+  const saveDictationResult = async (patientId: string, data: any) => {
+    try {
+      const patient = getPatientById(patientId);
+      if (!patient) throw new Error('Patient not found');
+
+      // 1. Update History and Alerts
+      const updatedHistory = {
+        ...patient.history,
+        chiefComplaint: data.chiefComplaint || patient.history.chiefComplaint,
+        historyOfPresentIllness: data.historyOfPresentIllness || patient.history.historyOfPresentIllness
+      };
+
+      const existingAlerts = patient.alerts || [];
+      const newAlerts = [...new Set([...existingAlerts, ...(data.suggestedAlerts || [])])];
+
+      const { error: patientError } = await supabase
+        .from('patients')
+        .update({
+          history: updatedHistory,
+          alerts: newAlerts
+        })
+        .eq('id', patientId);
+
+      if (patientError) throw patientError;
+
+      // 2. Add Medications
+      if (data.medications && Array.isArray(data.medications)) {
+        const medsToInsert = data.medications.map((m: any) => ({
+          patient_id: patientId,
+          name: m.name,
+          dosage: m.dosage,
+          frequency: m.frequency || 'Daily',
+          start_date: new Date().toISOString().split('T')[0],
+          active: true
+        }));
+
+        const { error: medsError } = await supabase
+          .from('medications')
+          .insert(medsToInsert);
+
+        if (medsError) throw medsError;
+      }
+
+      // 3. Add Clinical Scales
+      if (data.clinicalScales && Array.isArray(data.clinicalScales)) {
+        const scalesToInsert = data.clinicalScales.map((s: any) => ({
+          patient_id: patientId,
+          name: s.name,
+          score: s.score,
+          notes: s.notes,
+          date: new Date().toISOString()
+        }));
+
+        const { error: scalesError } = await supabase
+          .from('clinical_scales')
+          .insert(scalesToInsert);
+
+        if (scalesError) throw scalesError;
+      }
+
+      await fetchPatients();
+    } catch (e) {
+      console.error('Error saving dictation result to Supabase', e);
+      throw e;
+    }
+  };
+
+  const addClinicalScale = async (patientId: string, scaleData: any) => {
+    try {
+      const { error } = await supabase
+        .from('clinical_scales')
+        .insert([{
+          patient_id: patientId,
+          name: scaleData.name,
+          score: scaleData.score,
+          date: scaleData.date,
+          notes: scaleData.notes,
+          details: scaleData.details
+        }]);
+
+      if (error) throw error;
+      await fetchPatients();
+    } catch (e) {
+      console.error('Error adding clinical scale to Supabase', e);
+      throw e;
+    }
+  };
+
+  const fetchPatientDetails = async (id: string): Promise<Patient | null> => {
+    try {
+      const { data: patientData, error: patientError } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (patientError) throw patientError;
+
+      const { data: medsData, error: medsError } = await supabase
+        .from('medications')
+        .select('*')
+        .eq('patient_id', id);
+
+      if (medsError) throw medsError;
+
+      const { data: scalesData, error: scalesError } = await supabase
+        .from('clinical_scales')
+        .select('*')
+        .eq('patient_id', id);
+
+      if (scalesError) throw scalesError;
+
+      return {
+        id: patientData.id,
+        firstName: patientData.first_name,
+        lastName: patientData.last_name,
+        dateOfBirth: patientData.date_of_birth,
+        gender: patientData.gender,
+        mrn: patientData.mrn,
+        lastVisit: patientData.last_visit,
+        nextAppointment: patientData.next_appointment,
+        contact: patientData.contact,
+        history: patientData.history,
+        alerts: patientData.alerts || [],
+        medications: (medsData || []).map(m => ({
+          id: m.id,
+          name: m.name,
+          dosage: m.dosage,
+          frequency: m.frequency,
+          startDate: m.start_date,
+          endDate: m.end_date,
+          active: m.active
+        })),
+        clinicalScales: (scalesData || []).map(s => ({
+          id: s.id,
+          name: s.name,
+          score: s.score,
+          date: s.date,
+          notes: s.notes,
+          details: s.details
+        })),
+        imagingStudies: []
+      };
+    } catch (e) {
+      console.error('Error fetching patient details from Supabase', e);
+      return null;
+    }
+  };
+
+  const fetchRecentScalesCount = async (days: number = 7): Promise<number> => {
+    try {
+      const dateLimit = subDays(new Date(), days).toISOString();
+      const { count, error } = await supabase
+        .from('clinical_scales')
+        .select('*', { count: 'exact', head: true })
+        .gte('date', dateLimit);
+
+      if (error) throw error;
+      return count || 0;
+    } catch (e) {
+      console.error('Error fetching recent scales count from Supabase', e);
+      return 0;
+    }
+  };
+
   return (
-    <PatientContext.Provider value={{ patients, addPatient, updatePatient, deletePatient, getPatientById }}>
+    <PatientContext.Provider value={{ 
+      patients, 
+      loading, 
+      addPatient, 
+      updatePatient, 
+      deletePatient, 
+      getPatientById,
+      refreshPatients: fetchPatients,
+      saveDictationResult,
+      addClinicalScale,
+      fetchPatientDetails,
+      fetchRecentScalesCount
+    }}>
       {children}
     </PatientContext.Provider>
   );

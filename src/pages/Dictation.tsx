@@ -1,66 +1,42 @@
 import React, { useState } from 'react';
 import { Mic, Square, Save, Loader2, FileJson, AlertCircle } from 'lucide-react';
+import { usePatients } from '@/context/PatientContext';
+import { processClinicalDictation } from '@/services/geminiService';
+import { useNotification } from '@/context/NotificationContext';
 
 export function Dictation() {
+  const { patients, saveDictationResult } = usePatients();
+  const { addNotification } = useNotification();
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [structuredData, setStructuredData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [patients, setPatients] = useState<any[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState<string>('');
   const [saving, setSaving] = useState(false);
-
-  React.useEffect(() => {
-    fetch('/api/patients')
-      .then(res => res.json())
-      .then(data => setPatients(data))
-      .catch(err => console.error(err));
-  }, []);
 
   const saveToRecord = async () => {
     if (!selectedPatientId || !structuredData) return;
     setSaving(true);
     try {
-      const response = await fetch(`/api/patients/${selectedPatientId}/history`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          history: {
-            chiefComplaint: structuredData.chiefComplaint,
-            historyOfPresentIllness: structuredData.historyOfPresentIllness
-          },
-          medications: structuredData.medications,
-          alerts: structuredData.suggestedAlerts
-        })
-      });
-
-      if (response.ok) {
-        alert('¡Expediente actualizado exitosamente!');
-        setStructuredData(null);
-        setTranscript('');
-        setSelectedPatientId('');
-      } else {
-        throw new Error('Error al guardar');
-      }
+      await saveDictationResult(selectedPatientId, structuredData);
+      addNotification('¡Expediente Actualizado!', 'Los datos del dictado han sido guardados exitosamente.');
+      setStructuredData(null);
+      setTranscript('');
+      setSelectedPatientId('');
     } catch (err) {
-      alert('Error al guardar en el expediente');
+      addNotification('Error', 'No se pudo guardar la información en el expediente.');
       console.error(err);
     } finally {
       setSaving(false);
     }
   };
 
-  // In a real app, we would use the Web Speech API here.
-  // For this demo, we'll simulate the recording part or allow manual text entry.
   const toggleRecording = () => {
     setIsRecording(!isRecording);
     if (!isRecording) {
-      // Start recording simulation
       setError(null);
     } else {
-      // Stop recording simulation
-      // Pre-fill with a realistic clinical example if empty
       if (!transcript) {
         setTranscript("Paciente masculino de 65 años que presenta debilidad súbita en el lado derecho y dificultad para hablar desde hace 2 horas. Antecedentes de hipertensión y fibrilación auricular. Medicación actual incluye Metoprolol 50mg dos veces al día. PA es 160/95. La puntuación NIHSS parece ser alrededor de 12. Se recomienda TC de cabeza inmediata y Angio-TC.");
       }
@@ -73,19 +49,7 @@ export function Dictation() {
     setStructuredData(null);
 
     try {
-      const response = await fetch('/api/dictation/process', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ transcript }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al procesar el dictado');
-      }
-
-      const data = await response.json();
+      const data = await processClinicalDictation(transcript);
       setStructuredData(data);
     } catch (err) {
       setError('Error al procesar el dictado. Por favor intente de nuevo.');

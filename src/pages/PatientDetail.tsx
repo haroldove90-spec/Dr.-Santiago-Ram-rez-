@@ -16,7 +16,7 @@ import jsPDF from 'jspdf';
 export function PatientDetail() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
-  const { getPatientById, updatePatient } = usePatients();
+  const { getPatientById, fetchPatientDetails, updatePatient } = usePatients();
   const { role } = useRole();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
@@ -69,8 +69,11 @@ export function PatientDetail() {
   });
 
   useEffect(() => {
-    if (id) {
-      const foundPatient = getPatientById(id);
+    const loadPatient = async () => {
+      if (!id) return;
+      setLoading(true);
+      
+      const foundPatient = await fetchPatientDetails(id);
       if (foundPatient) {
         setPatient(foundPatient);
         setEditForm({
@@ -118,7 +121,6 @@ export function PatientDetail() {
         // Check for edit mode in location state
         if (location.state && (location.state as any).editMode) {
           setIsEditing(true);
-          // If specifically asked to edit history, switch to that tab
           if ((location.state as any).tab) {
             setActiveTab((location.state as any).tab);
           }
@@ -127,10 +129,12 @@ export function PatientDetail() {
         setError('Paciente no encontrado');
       }
       setLoading(false);
-    }
-  }, [id, getPatientById, location.state]);
+    };
 
-  const handleSave = () => {
+    loadPatient();
+  }, [id, fetchPatientDetails, location.state]);
+
+  const handleSave = async () => {
     if (!patient || !id) return;
     
     const updatedFields: Partial<Patient> = {
@@ -186,10 +190,14 @@ export function PatientDetail() {
       }
     };
 
-    updatePatient(id, updatedFields);
-    setPatient({ ...patient, ...updatedFields });
-    setIsEditing(false);
-    addNotification('Información Actualizada', 'Los datos del paciente han sido guardados correctamente.');
+    try {
+      await updatePatient(id, updatedFields);
+      setPatient({ ...patient, ...updatedFields });
+      setIsEditing(false);
+      addNotification('Información Actualizada', 'Los datos del paciente han sido guardados correctamente.');
+    } catch (error) {
+      addNotification('Error', 'No se pudo actualizar la información del paciente.');
+    }
   };
 
   const exportToPDF = () => {

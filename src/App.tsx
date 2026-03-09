@@ -20,7 +20,7 @@ import { RoleProvider, useRole } from './context/RoleContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { PatientProvider } from './context/PatientContext';
 
-function ProtectedRoute({ children }: { children: JSX.Element }) {
+function ProtectedRoute({ children }: { children: React.ReactElement }) {
   const { isAuthenticated } = useRole();
   const location = useLocation();
 

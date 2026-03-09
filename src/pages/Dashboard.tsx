@@ -1,30 +1,40 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { Users, AlertTriangle, Activity, Calendar, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { usePatients } from '@/context/PatientContext';
 
 export function Dashboard() {
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { patients, loading, fetchRecentScalesCount } = usePatients();
+  const [recentScalesCount, setRecentScalesCount] = useState(0);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch('/api/dashboard/stats');
-        if (response.ok) {
-          const data = await response.json();
-          setStats(data);
-        }
-      } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
-      } finally {
-        setLoading(false);
-      }
+    const loadStats = async () => {
+      const count = await fetchRecentScalesCount(7);
+      setRecentScalesCount(count);
     };
+    loadStats();
+  }, [fetchRecentScalesCount]);
 
-    fetchStats();
-  }, []);
+  const stats = useMemo(() => {
+    if (!patients) return null;
+
+    const totalPatients = patients.length;
+    const criticalAlerts = patients.filter(p => 
+      p.alerts && p.alerts.some(a => a.toLowerCase().includes('high stroke risk') || a.toLowerCase().includes('crítico'))
+    ).length;
+    
+    const recentPatients = [...patients]
+      .sort((a, b) => new Date(b.lastVisit).getTime() - new Date(a.lastVisit).getTime())
+      .slice(0, 5);
+
+    return {
+      totalPatients,
+      criticalAlerts,
+      recentPatients
+    };
+  }, [patients]);
 
   if (loading) {
     return <div className="p-8 text-center text-slate-500">Cargando tablero...</div>;
@@ -33,7 +43,7 @@ export function Dashboard() {
   const statCards = [
     { name: 'Total de Pacientes', value: stats?.totalPatients || 0, change: 'Activos', icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
     { name: 'Alertas Críticas', value: stats?.criticalAlerts || 0, change: 'Urgente', icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-100' },
-    { name: 'Escalas Recientes', value: stats?.recentScales || 0, change: 'Últimos 7 días', icon: Activity, color: 'text-[#215732]', bg: 'bg-[#215732]/10' },
+    { name: 'Escalas Recientes', value: recentScalesCount, change: 'Últimos 7 días', icon: Activity, color: 'text-[#215732]', bg: 'bg-[#215732]/10' },
     { name: 'Citas Hoy', value: '8', change: 'En curso', icon: Calendar, color: 'text-purple-600', bg: 'bg-purple-100' },
   ];
 
