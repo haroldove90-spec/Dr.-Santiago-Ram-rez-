@@ -6,6 +6,7 @@ import { subDays } from 'date-fns';
 interface PatientContextType {
   patients: Patient[];
   loading: boolean;
+  isConfigured: boolean;
   addPatient: (patient: Patient) => Promise<Patient | null>;
   updatePatient: (id: string, updatedPatient: Partial<Patient>) => Promise<void>;
   deletePatient: (id: string) => Promise<void>;
@@ -22,8 +23,21 @@ const PatientContext = createContext<PatientContextType | undefined>(undefined);
 export function PatientProvider({ children }: { children: ReactNode }) {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isConfigured, setIsConfigured] = useState(true);
+
+  const checkConfig = () => {
+    const url = (import.meta as any).env.VITE_SUPABASE_URL;
+    const key = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+    const isMissing = !url || url.includes('placeholder') || !key || key.includes('placeholder');
+    setIsConfigured(!isMissing);
+    return !isMissing;
+  };
 
   const fetchPatients = async () => {
+    if (!checkConfig()) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -59,10 +73,14 @@ export function PatientProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    checkConfig();
     fetchPatients();
   }, []);
 
   const addPatient = async (patient: Patient): Promise<Patient | null> => {
+    if (!checkConfig()) {
+      throw new Error('Configuración de base de datos (Supabase) faltante o incorrecta.');
+    }
     try {
       console.log('Attempting to add patient:', patient);
       const { data, error } = await supabase
@@ -327,6 +345,7 @@ export function PatientProvider({ children }: { children: ReactNode }) {
     <PatientContext.Provider value={{ 
       patients, 
       loading, 
+      isConfigured,
       addPatient, 
       updatePatient, 
       deletePatient, 

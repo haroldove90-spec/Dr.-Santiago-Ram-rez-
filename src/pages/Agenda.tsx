@@ -20,7 +20,7 @@ interface Appointment {
 export function Agenda() {
   const { role } = useRole();
   const { addNotification } = useNotification();
-  const { patients, getPatientById, addPatient } = usePatients();
+  const { patients, getPatientById, addPatient, isConfigured } = usePatients();
   const navigate = useNavigate();
   
   // Initialize with some mock appointments linked to the first mock patient if available
@@ -194,6 +194,12 @@ export function Agenda() {
           <p className="text-sm text-slate-500">Gestión de citas y horarios.</p>
         </div>
         <div className="flex items-center gap-3">
+          {!isConfigured && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              <span>Base de datos no configurada</span>
+            </div>
+          )}
           {role === 'assistant' && (
             <div className="bg-[#215732]/10 text-[#215732] px-3 py-1 rounded-full text-sm font-medium">
               Modo Asistente Activo

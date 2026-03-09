@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { User, Bell, Shield, Moon, Globe, Save, Clock, Calendar } from 'lucide-react';
+import { User, Bell, Shield, Moon, Globe, Save, Clock, Calendar, Database, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useNotification } from '@/context/NotificationContext';
+import { usePatients } from '@/context/PatientContext';
 
 export function Settings() {
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const { addNotification } = useNotification();
+  const { isConfigured } = usePatients();
 
   // Reminder Settings State
   const [reminderEnabled, setReminderEnabled] = useState(true);
@@ -26,6 +28,46 @@ export function Settings() {
       </div>
 
       <div className="bg-white shadow-sm border border-slate-200 rounded-xl overflow-hidden">
+        {/* Database Status Section */}
+        <div className="p-6 border-b border-slate-200 bg-slate-50/30">
+          <h2 className="text-lg font-medium text-slate-900 flex items-center mb-4">
+            <Database className="h-5 w-5 mr-2 text-indigo-600" />
+            Estado de la Base de Datos
+          </h2>
+          <div className="flex items-center justify-between p-4 rounded-lg border bg-white">
+            <div className="flex items-center">
+              {isConfigured ? (
+                <CheckCircle2 className="h-8 w-8 text-green-500 mr-4" />
+              ) : (
+                <AlertTriangle className="h-8 w-8 text-amber-500 mr-4" />
+              )}
+              <div>
+                <p className="text-sm font-semibold text-slate-900">
+                  {isConfigured ? 'Conectado a Supabase' : 'Configuración Pendiente'}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {isConfigured 
+                    ? 'La base de datos está configurada correctamente y lista para usar.' 
+                    : 'Faltan las variables de entorno VITE_SUPABASE_URL o VITE_SUPABASE_ANON_KEY.'}
+                </p>
+              </div>
+            </div>
+            {!isConfigured && (
+              <div className="text-right">
+                <p className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Acción Requerida</p>
+                <p className="text-xs text-amber-600 font-medium">Configurar en Vercel/Entorno</p>
+              </div>
+            )}
+          </div>
+          {!isConfigured && (
+            <div className="mt-4 p-4 bg-amber-50 border border-amber-100 rounded-lg">
+              <p className="text-xs text-amber-800 leading-relaxed">
+                <strong>Nota:</strong> Si estás viendo este mensaje en una implementación de Vercel, asegúrate de haber agregado las variables <code>VITE_SUPABASE_URL</code> y <code>VITE_SUPABASE_ANON_KEY</code> en la configuración del proyecto en el panel de Vercel.
+              </p>
+            </div>
+          )}
+        </div>
+
         {/* Profile Section */}
         <div className="p-6 border-b border-slate-200">
           <h2 className="text-lg font-medium text-slate-900 flex items-center">
