@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
-import { Activity, Lock, User } from 'lucide-react';
+import { Activity, Lock, User, Eye, EyeOff } from 'lucide-react';
 
 export function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<'doctor' | 'assistant'>('doctor');
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useRole();
   const navigate = useNavigate();
 
@@ -47,36 +47,6 @@ export function Login() {
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-slate-200">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="role" className="block text-sm font-medium text-slate-700">
-                Rol de Usuario
-              </label>
-              <div className="mt-1 grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setSelectedRole('doctor')}
-                  className={`flex justify-center items-center px-4 py-2 border rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#215732] ${
-                    selectedRole === 'doctor'
-                      ? 'bg-[#215732] text-white border-transparent'
-                      : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-                  }`}
-                >
-                  Médico
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedRole('assistant')}
-                  className={`flex justify-center items-center px-4 py-2 border rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#215732] ${
-                    selectedRole === 'assistant'
-                      ? 'bg-[#215732] text-white border-transparent'
-                      : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-                  }`}
-                >
-                  Asistente
-                </button>
-              </div>
-            </div>
-
-            <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-700">
                 Usuario
               </label>
@@ -108,13 +78,26 @@ export function Login() {
                 <input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
-                  className="block w-full pl-10 sm:text-sm border-slate-300 rounded-md focus:ring-[#215732] focus:border-[#215732] p-2 border"
+                  className="block w-full pl-10 pr-10 sm:text-sm border-slate-300 rounded-md focus:ring-[#215732] focus:border-[#215732] p-2 border"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-slate-400 hover:text-slate-600 focus:outline-none"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 

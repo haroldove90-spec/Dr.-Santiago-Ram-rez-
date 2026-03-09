@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Settings, Activity, Mic, X, Calendar, UserCog } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Settings, Activity, Mic, X, Calendar, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRole } from '@/context/RoleContext';
 
@@ -21,7 +21,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
-  const { role, setRole } = useRole();
+  const { role, logout } = useRole();
 
   return (
     <div className={cn(
@@ -77,14 +77,14 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         )})}
       </nav>
       
-      {/* Role Switcher for Demo */}
+      {/* Logout Button */}
       <div className="px-4 py-2">
         <button
-          onClick={() => setRole(role === 'doctor' ? 'assistant' : 'doctor')}
-          className="w-full flex items-center justify-center px-4 py-2 border border-white/20 rounded-md shadow-sm text-sm font-medium text-white bg-black/20 hover:bg-black/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          onClick={() => logout()}
+          className="w-full flex items-center justify-center px-4 py-2 border border-white/20 rounded-md shadow-sm text-sm font-medium text-white bg-red-600/20 hover:bg-red-600/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
         >
-          <UserCog className="mr-2 h-4 w-4" />
-          {role === 'doctor' ? 'Cambiar a Asistente' : 'Cambiar a Doctor'}
+          <LogOut className="mr-2 h-4 w-4" />
+          Cerrar Sesión
         </button>
       </div>
 
