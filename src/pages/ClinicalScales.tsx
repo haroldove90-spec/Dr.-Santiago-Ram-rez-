@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Save, CheckCircle } from 'lucide-react';
 import { usePatients } from '@/context/PatientContext';
+import { useNotification } from '@/context/NotificationContext';
 
 const nihssQuestions = [
   { id: '1a', label: '1a. Nivel de Conciencia', options: [{ val: 0, text: 'Alerta' }, { val: 1, text: 'Somnoliento' }, { val: 2, text: 'Obnubilado' }, { val: 3, text: 'Coma' }] },
@@ -22,6 +23,7 @@ const nihssQuestions = [
 
 export function ClinicalScales() {
   const { patients, addClinicalScale } = usePatients();
+  const { addNotification } = useNotification();
   const [selectedPatientId, setSelectedPatientId] = useState<string>('');
   const [scores, setScores] = useState<Record<string, number>>({});
   const [saving, setSaving] = useState(false);
@@ -34,7 +36,10 @@ export function ClinicalScales() {
   const totalScore = Object.values(scores).reduce((a: number, b: number) => a + b, 0);
 
   const saveScale = async () => {
-    if (!selectedPatientId) return alert('Por favor seleccione un paciente');
+    if (!selectedPatientId) {
+      addNotification('Error', 'Por favor seleccione un paciente');
+      return;
+    }
     setSaving(true);
     try {
       await addClinicalScale(selectedPatientId, {
@@ -45,13 +50,14 @@ export function ClinicalScales() {
         details: scores
       });
 
+      addNotification('Escala Guardada', 'La evaluación NIHSS ha sido registrada exitosamente.');
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
       setScores({});
       setSelectedPatientId('');
     } catch (error) {
       console.error('Error saving scale:', error);
-      alert('Error al guardar la escala');
+      addNotification('Error', 'Error al guardar la escala');
     } finally {
       setSaving(false);
     }

@@ -7,6 +7,7 @@ export function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
   const { login } = useRole();
   const navigate = useNavigate();
 
@@ -23,7 +24,7 @@ export function Login() {
       login('assistant');
       navigate('/');
     } else {
-      alert('Credenciales incorrectas. Por favor verifique su usuario y contraseña.');
+      setError('Credenciales incorrectas. Por favor verifique su usuario y contraseña.');
     }
   };
 
@@ -110,6 +111,12 @@ export function Login() {
               </button>
             </div>
           </form>
+
+          {error && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600 text-center">{error}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

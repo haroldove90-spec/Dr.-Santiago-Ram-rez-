@@ -49,7 +49,7 @@ export function Agenda() {
 
       if (isNewPatient) {
         if (!newPatientData.firstName || !newPatientData.lastName || !newPatientData.mrn) {
-          alert('Por favor complete los datos del nuevo paciente.');
+          addNotification('Error', 'Por favor complete los datos del nuevo paciente.');
           setIsSubmitting(false);
           return;
         }

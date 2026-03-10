@@ -26,8 +26,8 @@ export function PatientProvider({ children }: { children: ReactNode }) {
   const [isConfigured, setIsConfigured] = useState(true);
 
   const checkConfig = () => {
-    const url = (import.meta as any).env.VITE_SUPABASE_URL;
-    const key = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+    const url = import.meta.env.VITE_SUPABASE_URL;
+    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
     const isMissing = !url || url.includes('placeholder') || !key || key.includes('placeholder');
     setIsConfigured(!isMissing);
     return !isMissing;

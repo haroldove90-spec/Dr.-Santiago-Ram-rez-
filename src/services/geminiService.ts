@@ -5,9 +5,10 @@ export async function processClinicalDictation(transcript: string) {
     throw new Error('Transcript is required');
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  // Use a safer way to access environment variables in Vite
+  const apiKey = typeof process !== 'undefined' && process.env ? process.env.GEMINI_API_KEY : (import.meta as any).env.VITE_GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error('GEMINI_API_KEY not configured');
+    throw new Error('GEMINI_API_KEY not configured. Please set it in your environment.');
   }
 
   const ai = new GoogleGenAI({ apiKey });
