@@ -4,9 +4,12 @@ import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { usePatients } from '@/context/PatientContext';
+import { useAppointments } from '@/context/AppointmentContext';
+import { isToday } from 'date-fns';
 
 export function Dashboard() {
-  const { patients, loading, fetchRecentScalesCount } = usePatients();
+  const { patients, loading: patientsLoading, fetchRecentScalesCount } = usePatients();
+  const { appointments, loading: appointmentsLoading } = useAppointments();
   const [recentScalesCount, setRecentScalesCount] = useState(0);
 
   useEffect(() => {
@@ -37,7 +40,12 @@ export function Dashboard() {
     };
   }, [patients]);
 
-  if (loading) {
+  const todayAppointmentsCount = useMemo(() => {
+    if (!appointments || !Array.isArray(appointments)) return 0;
+    return appointments.filter(apt => isToday(new Date(apt.date)) && apt.status !== 'cancelled').length;
+  }, [appointments]);
+
+  if (patientsLoading || appointmentsLoading) {
     return <div className="p-8 text-center text-slate-500">Cargando tablero...</div>;
   }
 
@@ -45,7 +53,7 @@ export function Dashboard() {
     { name: 'Total de Pacientes', value: stats?.totalPatients || 0, change: 'Activos', icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
     { name: 'Alertas Críticas', value: stats?.criticalAlerts || 0, change: 'Urgente', icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-100' },
     { name: 'Escalas Recientes', value: recentScalesCount, change: 'Últimos 7 días', icon: Activity, color: 'text-[#215732]', bg: 'bg-[#215732]/10' },
-    { name: 'Citas Hoy', value: '8', change: 'En curso', icon: Calendar, color: 'text-purple-600', bg: 'bg-purple-100' },
+    { name: 'Citas Hoy', value: todayAppointmentsCount, change: 'En curso', icon: Calendar, color: 'text-purple-600', bg: 'bg-purple-100' },
   ];
 
   return (

@@ -3,28 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { useNotification } from '../context/NotificationContext';
 import { usePatients } from '../context/PatientContext';
+import { useAppointments, Appointment } from '../context/AppointmentContext';
 import { Calendar, Clock, User, Plus, Check, X, MoreVertical, DollarSign, AlertCircle, Search } from 'lucide-react';
 import { format, addDays, startOfWeek, addHours } from 'date-fns';
 import { es } from 'date-fns/locale';
-
-interface Appointment {
-  id: string;
-  patientId: string;
-  patientName: string;
-  date: Date;
-  type: string;
-  cost: number;
-  status: 'scheduled' | 'confirmed' | 'cancelled' | 'completed';
-}
 
 export function Agenda() {
   const { role } = useRole();
   const { addNotification } = useNotification();
   const { patients, getPatientById, addPatient, isConfigured } = usePatients();
+  const { appointments, addAppointment, updateAppointmentStatus, loading } = useAppointments();
   const navigate = useNavigate();
   
-  // Initialize with some mock appointments linked to the first mock patient if available
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isNewPatient, setIsNewPatient] = useState(false);
 
@@ -35,14 +25,6 @@ export function Agenda() {
     dateOfBirth: '',
     gender: 'male' as 'male' | 'female' | 'other'
   });
-  useEffect(() => {
-    if (patients.length > 0 && appointments.length === 0) {
-      setAppointments([
-        { id: '1', patientId: patients[0].id, patientName: `${patients[0].firstName} ${patients[0].lastName}`, date: addHours(new Date(), 2), type: 'Consulta Inicial', cost: 800, status: 'scheduled' },
-        { id: '2', patientId: patients[1]?.id || patients[0].id, patientName: patients[1] ? `${patients[1].firstName} ${patients[1].lastName}` : `${patients[0].firstName} ${patients[0].lastName}`, date: addDays(new Date(), 1), type: 'Seguimiento', cost: 500, status: 'confirmed' },
-      ]);
-    }
-  }, [patients]);
 
   const [newAppointment, setNewAppointment] = useState({
     patientId: '',
@@ -113,35 +95,38 @@ export function Agenda() {
       }
 
       const date = new Date(`${newAppointment.date}T${newAppointment.time}`);
-      const appointment: Appointment = {
-        id: Date.now().toString(),
+      
+      await addAppointment({
         patientId: patientId,
         patientName: patientName,
         date: date,
         type: newAppointment.type,
         cost: Number(newAppointment.cost) || 0,
         status: 'scheduled'
-      };
+      });
 
-      setAppointments([...appointments, appointment]);
-      addNotification('Nueva Cita Agendada', `Cita para ${appointment.patientName} el ${format(date, 'dd/MM/yyyy HH:mm')}`);
+      addNotification('Nueva Cita Agendada', `Cita para ${patientName} el ${format(date, 'dd/MM/yyyy HH:mm')}`);
       
       setNewAppointment({ patientId: '', date: '', time: '', type: 'Consulta General', cost: '' });
       setNewPatientData({ firstName: '', lastName: '', mrn: '', dateOfBirth: '', gender: 'male' });
       setIsNewPatient(false);
       setIsModalOpen(false);
     } catch (error: any) {
-      console.error('Error registering patient:', error);
-      addNotification('Error', `No se pudo registrar al nuevo paciente: ${error.message || 'Error desconocido'}`);
+      console.error('Error registering appointment:', error);
+      addNotification('Error', `No se pudo registrar la cita: ${error.message || 'Error desconocido'}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const updateStatus = (id: string, status: Appointment['status']) => {
-    setAppointments(appointments.map(apt => apt.id === id ? { ...apt, status } : apt));
-    const statusText = status === 'confirmed' ? 'Confirmada' : status === 'cancelled' ? 'Cancelada' : 'Completada';
-    addNotification('Estado Actualizado', `La cita ha sido marcada como ${statusText}`);
+  const updateStatus = async (id: string, status: Appointment['status']) => {
+    try {
+      await updateAppointmentStatus(id, status);
+      const statusText = status === 'confirmed' ? 'Confirmada' : status === 'cancelled' ? 'Cancelada' : 'Completada';
+      addNotification('Estado Actualizado', `La cita ha sido marcada como ${statusText}`);
+    } catch (error) {
+      addNotification('Error', 'No se pudo actualizar el estado de la cita');
+    }
   };
 
   const getStatusColor = (status: string) => {

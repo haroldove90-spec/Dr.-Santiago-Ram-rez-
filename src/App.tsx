@@ -19,6 +19,7 @@ import { Login } from './pages/Login';
 import { RoleProvider, useRole } from './context/RoleContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { PatientProvider } from './context/PatientContext';
+import { AppointmentProvider } from './context/AppointmentContext';
 
 function ProtectedRoute({ children }: { children: React.ReactElement }) {
   const { isAuthenticated } = useRole();
@@ -36,29 +37,31 @@ export default function App() {
     <RoleProvider>
       <NotificationProvider>
         <PatientProvider>
-          <Router>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <Layout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<Dashboard />} />
-                <Route path="patients" element={<Patients />} />
-                <Route path="patients/:id" element={<PatientDetail />} />
-                <Route path="agenda" element={<Agenda />} />
-                <Route path="prescriptions" element={<Prescriptions />} />
-                <Route path="scales" element={<ClinicalScales />} />
-                <Route path="dictation" element={<Dictation />} />
-                <Route path="reports" element={<Reports />} />
-                <Route path="settings" element={<Settings />} />
-              </Route>
-            </Routes>
-          </Router>
+          <AppointmentProvider>
+            <Router>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route
+                  path="/"
+                  element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<Dashboard />} />
+                  <Route path="patients" element={<Patients />} />
+                  <Route path="patients/:id" element={<PatientDetail />} />
+                  <Route path="agenda" element={<Agenda />} />
+                  <Route path="prescriptions" element={<Prescriptions />} />
+                  <Route path="scales" element={<ClinicalScales />} />
+                  <Route path="dictation" element={<Dictation />} />
+                  <Route path="reports" element={<Reports />} />
+                  <Route path="settings" element={<Settings />} />
+                </Route>
+              </Routes>
+            </Router>
+          </AppointmentProvider>
         </PatientProvider>
       </NotificationProvider>
     </RoleProvider>
