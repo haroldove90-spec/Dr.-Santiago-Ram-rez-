@@ -54,6 +54,14 @@ export function Agenda() {
           return;
         }
 
+        // Check if MRN already exists in local state to provide a better error message
+        const existingByMrn = patients.find(p => p.mrn === newPatientData.mrn);
+        if (existingByMrn) {
+          addNotification('Error', `Ya existe un paciente registrado con el MRN ${newPatientData.mrn} (${existingByMrn.lastName}, ${existingByMrn.firstName}). Por favor, use la opción "Seleccionar existente".`);
+          setIsSubmitting(false);
+          return;
+        }
+
         const createdPatient = await addPatient({
           id: '',
           firstName: newPatientData.firstName,
@@ -113,7 +121,13 @@ export function Agenda() {
       setIsModalOpen(false);
     } catch (error: any) {
       console.error('Error registering appointment:', error);
-      addNotification('Error', `No se pudo registrar la cita: ${error.message || 'Error desconocido'}`);
+      let errorMessage = error.message || 'Error desconocido';
+      
+      if (errorMessage.includes('patients_mrn_key')) {
+        errorMessage = 'Ya existe un paciente con este número de Historia Clínica (MRN).';
+      }
+      
+      addNotification('Error', `No se pudo registrar la cita: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
