@@ -1,9 +1,4 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import React from 'react';
+import React, { Component, ReactNode, ErrorInfo } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { Dashboard } from './pages/Dashboard';
@@ -33,6 +28,7 @@ function ProtectedRoute({ children }: { children: React.ReactElement }) {
 }
 
 export default function App() {
+  console.log('App is rendering');
   return (
     <RoleProvider>
       <NotificationProvider>

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, Search, Menu, User, FileText } from 'lucide-react';
-import { useNotification } from '@/context/NotificationContext';
-import { useRole } from '@/context/RoleContext';
-import { usePatients } from '@/context/PatientContext';
+import { useNotification } from '../../context/NotificationContext';
+import { useRole } from '../../context/RoleContext';
+import { usePatients } from '../../context/PatientContext';
 import { useNavigate } from 'react-router-dom';
 
 interface HeaderProps {

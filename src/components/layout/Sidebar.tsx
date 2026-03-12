@@ -1,8 +1,8 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Users, FileText, Settings, Activity, Mic, X, Calendar, LogOut } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useRole } from '@/context/RoleContext';
+import { cn } from '../../lib/utils';
+import { useRole } from '../../context/RoleContext';
 
 const navigation = [
   { name: 'Inicio', href: '/', icon: LayoutDashboard },

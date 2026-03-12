@@ -30,22 +30,8 @@ import {
   startOfToday
 } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { usePatients } from '@/context/PatientContext';
-import { useAppointments } from '@/context/AppointmentContext';
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar
-} from 'recharts';
+import { usePatients } from '../context/PatientContext';
+import { useAppointments } from '../context/AppointmentContext';
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -73,7 +59,14 @@ export function Dashboard() {
       p.alerts?.some(a => a.toLowerCase().includes('high stroke risk') || a.toLowerCase().includes('crítico'))
     ).length;
     
-    const todayApts = appointments.filter(apt => isToday(new Date(apt.date)) && apt.status !== 'cancelled');
+    const todayApts = appointments.filter(apt => {
+      try {
+        const date = apt.date instanceof Date ? apt.date : new Date(apt.date);
+        return isToday(date) && apt.status !== 'cancelled';
+      } catch (e) {
+        return false;
+      }
+    });
     const todayRevenue = todayApts.reduce((sum, apt) => sum + (apt.cost || 0), 0);
 
     // 2. Revenue Trend (Last 7 days)
@@ -84,7 +77,14 @@ export function Dashboard() {
 
     const revenueTrend = last7Days.map(day => {
       const dayTotal = appointments
-        .filter(apt => isSameDay(new Date(apt.date), day) && apt.status !== 'cancelled')
+        .filter(apt => {
+          try {
+            const date = apt.date instanceof Date ? apt.date : new Date(apt.date);
+            return isSameDay(date, day) && apt.status !== 'cancelled';
+          } catch (e) {
+            return false;
+          }
+        })
         .reduce((sum, apt) => sum + (apt.cost || 0), 0);
       
       return {
@@ -102,21 +102,40 @@ export function Dashboard() {
 
     // 4. Upcoming Schedule (Next 3 for today)
     const upcomingToday = [...todayApts]
-      .filter(apt => isAfter(new Date(apt.date), new Date()))
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .filter(apt => {
+        try {
+          const date = apt.date instanceof Date ? apt.date : new Date(apt.date);
+          return isAfter(date, new Date());
+        } catch (e) {
+          return false;
+        }
+      })
+      .sort((a, b) => {
+        const dateA = a.date instanceof Date ? a.date : new Date(a.date);
+        const dateB = b.date instanceof Date ? b.date : new Date(b.date);
+        return dateA.getTime() - dateB.getTime();
+      })
       .slice(0, 3);
 
     // 5. Patient Growth (Last 4 weeks)
     const recentPatients = [...patients]
       .filter(p => p.lastVisit)
-      .sort((a, b) => new Date(b.lastVisit).getTime() - new Date(a.lastVisit).getTime())
+      .sort((a, b) => {
+        try {
+          const dateA = new Date(a.lastVisit || 0).getTime();
+          const dateB = new Date(b.lastVisit || 0).getTime();
+          return dateB - dateA;
+        } catch (e) {
+          return 0;
+        }
+      })
       .slice(0, 5);
 
     // 6. Search Results
     const searchResults = searchQuery.length > 1 
       ? patients.filter(p => 
-          `${p.firstName} ${p.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.mrn.includes(searchQuery)
+          `${p.firstName || ''} ${p.lastName || ''}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (p.mrn && p.mrn.includes(searchQuery))
         ).slice(0, 5)
       : [];
 
@@ -140,8 +159,6 @@ export function Dashboard() {
       </div>
     );
   }
-
-  const COLORS = ['#215732', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'];
 
   const statCards = [
     { name: 'Pacientes Totales', value: dashboardData.totalPatients, label: 'Expedientes', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -257,7 +274,7 @@ export function Dashboard() {
             </div>
             <TrendingUp className="w-5 h-5 text-emerald-500" />
           </div>
-          <div className="h-[300px] w-full">
+          {/* <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={dashboardData.revenueTrend}>
                 <defs>
@@ -293,6 +310,9 @@ export function Dashboard() {
                 />
               </AreaChart>
             </ResponsiveContainer>
+          </div> */}
+          <div className="h-[300px] w-full flex items-center justify-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            <p className="text-slate-400">Gráfico de ingresos (Temporalmente desactivado)</p>
           </div>
         </div>
 
@@ -341,7 +361,7 @@ export function Dashboard() {
             <h3 className="text-lg font-bold text-slate-900">Distribución</h3>
             <PieChartIcon className="w-5 h-5 text-slate-400" />
           </div>
-          <div className="h-[200px] w-full">
+          {/* <div className="h-[200px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -360,14 +380,9 @@ export function Dashboard() {
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
-          </div>
-          <div className="grid grid-cols-2 gap-2 mt-4">
-            {dashboardData.typeData.map((entry, index) => (
-              <div key={entry.name} className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{backgroundColor: COLORS[index % COLORS.length]}}></div>
-                <span className="text-[10px] text-slate-600 truncate">{entry.name}</span>
-              </div>
-            ))}
+          </div> */}
+          <div className="h-[200px] w-full flex items-center justify-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            <p className="text-slate-400 text-xs">Distribución (Desactivado)</p>
           </div>
         </div>
 
