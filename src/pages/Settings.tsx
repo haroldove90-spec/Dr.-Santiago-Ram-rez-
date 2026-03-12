@@ -7,7 +7,20 @@ export function Settings() {
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const { addNotification } = useNotification();
-  const { isConfigured } = usePatients();
+  const { isConfigured, fetchPatients } = usePatients();
+  const [testingConnection, setTestingConnection] = useState(false);
+
+  const testConnection = async () => {
+    setTestingConnection(true);
+    try {
+      await fetchPatients();
+      addNotification('Conexión Exitosa', 'Se ha establecido conexión con la base de datos correctamente.');
+    } catch (err) {
+      addNotification('Error de Conexión', 'No se pudo conectar con Supabase. Verifique sus credenciales.');
+    } finally {
+      setTestingConnection(false);
+    }
+  };
 
   // Reminder Settings State
   const [reminderEnabled, setReminderEnabled] = useState(true);
@@ -58,6 +71,25 @@ export function Settings() {
                 <p className="text-xs text-amber-600 font-medium">Configurar en Vercel/Entorno</p>
               </div>
             )}
+          </div>
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={testConnection}
+              disabled={testingConnection}
+              className="inline-flex items-center px-3 py-1.5 border border-slate-300 shadow-sm text-xs font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+            >
+              {testingConnection ? (
+                <>
+                  <Clock className="animate-spin -ml-1 mr-2 h-3 w-3" />
+                  Probando...
+                </>
+              ) : (
+                <>
+                  <Database className="-ml-1 mr-2 h-3 w-3" />
+                  Probar Conexión
+                </>
+              )}
+            </button>
           </div>
           {!isConfigured && (
             <div className="mt-4 p-4 bg-amber-50 border border-amber-100 rounded-lg">

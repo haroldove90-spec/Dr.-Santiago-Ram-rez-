@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Mic, Square, Save, Loader2, FileJson, AlertCircle } from 'lucide-react';
 import { usePatients } from '@/context/PatientContext';
 import { processClinicalDictation } from '@/services/geminiService';
@@ -7,13 +8,61 @@ import { useNotification } from '@/context/NotificationContext';
 export function Dictation() {
   const { patients, saveDictationResult } = usePatients();
   const { addNotification } = useNotification();
+  const [searchParams] = useSearchParams();
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [structuredData, setStructuredData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPatientId, setSelectedPatientId] = useState<string>('');
+  const [selectedPatientId, setSelectedPatientId] = useState<string>(searchParams.get('patientId') || '');
   const [saving, setSaving] = useState(false);
+  const [recognition, setRecognition] = useState<any>(null);
+
+  useEffect(() => {
+    const patientId = searchParams.get('patientId');
+    if (patientId) {
+      setSelectedPatientId(patientId);
+    }
+  }, [searchParams]);
+  useEffect(() => {
+    // Initialize SpeechRecognition
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const rec = new SpeechRecognition();
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.lang = 'es-MX';
+
+      rec.onresult = (event: any) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+        
+        if (finalTranscript) {
+          setTranscript(prev => prev + (prev ? ' ' : '') + finalTranscript);
+        }
+      };
+
+      rec.onerror = (event: any) => {
+        console.error('Speech recognition error', event.error);
+        setError(`Error de reconocimiento de voz: ${event.error}`);
+        setIsRecording(false);
+      };
+
+      rec.onend = () => {
+        setIsRecording(false);
+      };
+
+      setRecognition(rec);
+    }
+  }, []);
 
   const saveToRecord = async () => {
     if (!selectedPatientId || !structuredData) return;
@@ -33,12 +82,23 @@ export function Dictation() {
   };
 
   const toggleRecording = () => {
-    setIsRecording(!isRecording);
-    if (!isRecording) {
-      setError(null);
+    if (!recognition) {
+      setError('El reconocimiento de voz no es compatible con este navegador.');
+      return;
+    }
+
+    if (isRecording) {
+      recognition.stop();
+      setIsRecording(false);
     } else {
-      if (!transcript) {
-        setTranscript("Paciente masculino de 65 años que presenta debilidad súbita en el lado derecho y dificultad para hablar desde hace 2 horas. Antecedentes de hipertensión y fibrilación auricular. Medicación actual incluye Metoprolol 50mg dos veces al día. PA es 160/95. La puntuación NIHSS parece ser alrededor de 12. Se recomienda TC de cabeza inmediata y Angio-TC.");
+      setError(null);
+      try {
+        recognition.start();
+        setIsRecording(true);
+      } catch (e) {
+        console.error('Failed to start recognition', e);
+        // If already started, just sync state
+        setIsRecording(true);
       }
     }
   };

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   User, Calendar, Phone, Mail, AlertTriangle, Activity, 
-  Pill, FileText, ArrowLeft, Clock, Brain, Edit2, Save, X, Download 
+  Pill, FileText, ArrowLeft, Clock, Brain, Edit2, Save, X, Download, Mic 
 } from 'lucide-react';
 import { Patient } from '@/types/patient';
 import { format } from 'date-fns';
@@ -16,6 +16,7 @@ import jsPDF from 'jspdf';
 export function PatientDetail() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
   const { getPatientById, fetchPatientDetails, updatePatient } = usePatients();
   const { role } = useRole();
   const [patient, setPatient] = useState<Patient | null>(null);
@@ -614,7 +615,16 @@ export function PatientDetail() {
 
                {/* 2. Anamnesis Neurológica */}
                <div>
-                 <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">2. Anamnesis Neurológica</h3>
+                 <div className="flex items-center justify-between mb-4 border-b pb-2">
+                   <h3 className="text-lg font-semibold text-slate-900">2. Anamnesis Neurológica</h3>
+                   <button
+                     onClick={() => navigate(`/dictation?patientId=${patient.id}`)}
+                     className="inline-flex items-center px-3 py-1.5 border border-indigo-600 text-xs font-medium rounded-lg text-indigo-600 bg-white hover:bg-indigo-50 transition-colors"
+                   >
+                     <Mic className="h-3.5 w-3.5 mr-1.5" />
+                     Dictar Nota AI
+                   </button>
+                 </div>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div className="col-span-1 md:col-span-2">
                      <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider mb-2">Motivo de Consulta</h4>
