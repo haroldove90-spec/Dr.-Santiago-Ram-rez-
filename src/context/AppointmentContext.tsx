@@ -15,6 +15,7 @@ export interface Appointment {
 interface AppointmentContextType {
   appointments: Appointment[];
   loading: boolean;
+  usingLocalStorage: boolean;
   addAppointment: (appointment: Omit<Appointment, 'id'>) => Promise<void>;
   updateAppointmentStatus: (id: string, status: Appointment['status']) => Promise<void>;
   refreshAppointments: () => Promise<void>;
@@ -25,6 +26,7 @@ const AppointmentContext = createContext<AppointmentContextType | undefined>(und
 export function AppointmentProvider({ children }: { children: ReactNode }) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [usingLocalStorage, setUsingLocalStorage] = useState(false);
   const { isConfigured } = usePatients();
 
   const fetchAppointments = async () => {
@@ -43,6 +45,7 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
         // If table doesn't exist, fallback to local storage
         if (error.message.includes('not find the table') || error.code === '42P01') {
           console.warn('Appointments table not found in Supabase, falling back to local storage');
+          setUsingLocalStorage(true);
           const localApts = localStorage.getItem('local_appointments');
           if (localApts) {
             const parsed = JSON.parse(localApts).map((a: any) => ({
@@ -68,9 +71,11 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
 
       // Merge with local appointments if any (optional, but let's keep it simple)
       setAppointments(formatted);
+      setUsingLocalStorage(false);
     } catch (e) {
       console.error('Error fetching appointments:', e);
       // Fallback on any error
+      setUsingLocalStorage(true);
       const localApts = localStorage.getItem('local_appointments');
       if (localApts) {
         setAppointments(JSON.parse(localApts).map((a: any) => ({ ...a, date: new Date(a.date) })));
@@ -146,6 +151,7 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
     <AppointmentContext.Provider value={{ 
       appointments, 
       loading, 
+      usingLocalStorage,
       addAppointment, 
       updateAppointmentStatus,
       refreshAppointments: fetchAppointments 

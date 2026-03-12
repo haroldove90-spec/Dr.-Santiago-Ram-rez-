@@ -6,6 +6,7 @@ import { subDays } from 'date-fns';
 interface PatientContextType {
   patients: Patient[];
   loading: boolean;
+  usingLocalStorage: boolean;
   isConfigured: boolean;
   addPatient: (patient: Patient) => Promise<Patient | null>;
   updatePatient: (id: string, updatedPatient: Partial<Patient>) => Promise<void>;
@@ -23,6 +24,7 @@ const PatientContext = createContext<PatientContextType | undefined>(undefined);
 export function PatientProvider({ children }: { children: ReactNode }) {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
+  const [usingLocalStorage, setUsingLocalStorage] = useState(false);
   const [isConfigured, setIsConfigured] = useState(true);
 
   const checkConfig = () => {
@@ -48,6 +50,7 @@ export function PatientProvider({ children }: { children: ReactNode }) {
       if (error) {
         if (error.message.includes('not find the table') || error.code === '42P01') {
           console.warn('Patients table not found, falling back to local storage');
+          setUsingLocalStorage(true);
           const localPatients = localStorage.getItem('local_patients');
           if (localPatients) {
             setPatients(JSON.parse(localPatients));
@@ -75,8 +78,10 @@ export function PatientProvider({ children }: { children: ReactNode }) {
       }));
 
       setPatients(formattedPatients);
+      setUsingLocalStorage(false);
     } catch (e) {
       console.error('Error fetching patients from Supabase', e);
+      setUsingLocalStorage(true);
       const localPatients = localStorage.getItem('local_patients');
       if (localPatients) {
         setPatients(JSON.parse(localPatients));
@@ -373,6 +378,7 @@ export function PatientProvider({ children }: { children: ReactNode }) {
     <PatientContext.Provider value={{ 
       patients, 
       loading, 
+      usingLocalStorage,
       isConfigured,
       addPatient, 
       updatePatient, 
