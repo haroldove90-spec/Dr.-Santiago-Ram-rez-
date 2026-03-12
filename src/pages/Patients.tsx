@@ -79,6 +79,22 @@ export function Patients() {
       });
     } catch (error: any) {
       console.error('Error adding patient:', error);
+      
+      if (error.isLocalSave) {
+        addNotification('Guardado Local', error.message);
+        setIsModalOpen(false);
+        setNewPatient({
+          firstName: '',
+          lastName: '',
+          dateOfBirth: '',
+          gender: 'male',
+          mrn: '',
+          email: '',
+          phone: ''
+        });
+        return;
+      }
+
       let errorMessage = 'No se pudo registrar al paciente.';
       
       if (error.message?.includes('patients_mrn_key')) {

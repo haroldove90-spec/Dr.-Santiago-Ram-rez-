@@ -45,7 +45,17 @@ export function PatientProvider({ children }: { children: ReactNode }) {
         .select('*')
         .order('last_visit', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('not find the table') || error.code === '42P01') {
+          console.warn('Patients table not found, falling back to local storage');
+          const localPatients = localStorage.getItem('local_patients');
+          if (localPatients) {
+            setPatients(JSON.parse(localPatients));
+          }
+          return;
+        }
+        throw error;
+      }
 
       const formattedPatients: Patient[] = (data || []).map(p => ({
         id: p.id,
@@ -67,6 +77,10 @@ export function PatientProvider({ children }: { children: ReactNode }) {
       setPatients(formattedPatients);
     } catch (e) {
       console.error('Error fetching patients from Supabase', e);
+      const localPatients = localStorage.getItem('local_patients');
+      if (localPatients) {
+        setPatients(JSON.parse(localPatients));
+      }
     } finally {
       setLoading(false);
     }
@@ -100,7 +114,21 @@ export function PatientProvider({ children }: { children: ReactNode }) {
         .select();
 
       if (error) {
-        console.error('Supabase error adding patient:', error);
+        if (error.message.includes('not find the table') || error.code === '42P01') {
+          const newLocalPatient: Patient = {
+            ...patient,
+            id: `local-p-${Date.now()}`
+          };
+          const localPatients = JSON.parse(localStorage.getItem('local_patients') || '[]');
+          const updatedLocal = [...localPatients, newLocalPatient];
+          localStorage.setItem('local_patients', JSON.stringify(updatedLocal));
+          
+          setPatients(prev => [newLocalPatient, ...prev]);
+          
+          const customError = new Error('El paciente se guardó LOCALMENTE porque la tabla "patients" no existe. Por favor, cree la tabla para sincronizar.');
+          (customError as any).isLocalSave = true;
+          throw customError;
+        }
         throw error;
       }
       if (data && data[0]) {

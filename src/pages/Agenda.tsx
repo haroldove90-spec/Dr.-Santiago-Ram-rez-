@@ -121,10 +121,24 @@ export function Agenda() {
       setIsModalOpen(false);
     } catch (error: any) {
       console.error('Error registering appointment:', error);
+      
+      if (error.isLocalSave) {
+        addNotification('Guardado Local', error.message);
+        setNewAppointment({ patientId: '', date: '', time: '', type: 'Consulta General', cost: '' });
+        setNewPatientData({ firstName: '', lastName: '', mrn: '', dateOfBirth: '', gender: 'male' });
+        setIsNewPatient(false);
+        setIsModalOpen(false);
+        return;
+      }
+
       let errorMessage = error.message || 'Error desconocido';
       
       if (errorMessage.includes('patients_mrn_key')) {
         errorMessage = 'Ya existe un paciente con este número de Historia Clínica (MRN).';
+      }
+      
+      if (errorMessage.includes('not find the table')) {
+        errorMessage = 'La tabla de citas no existe en la base de datos. Contacte al administrador.';
       }
       
       addNotification('Error', `No se pudo registrar la cita: ${errorMessage}`);
