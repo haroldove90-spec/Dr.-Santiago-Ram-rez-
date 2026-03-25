@@ -244,20 +244,20 @@ export function Agenda() {
           </div>
           <input
             type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md leading-5 bg-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:text-white placeholder-slate-500 focus:outline-none focus:placeholder-slate-400 focus:ring-1 focus:ring-[#215732] focus:border-[#215732] sm:text-sm transition duration-150 ease-in-out"
+            className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md leading-5 bg-slate-100 dark:bg-slate-100 dark:border-slate-300 dark:text-slate-900 placeholder-slate-500 focus:outline-none focus:placeholder-slate-400 focus:ring-1 focus:ring-[#215732] focus:border-[#215732] sm:text-sm transition duration-150 ease-in-out"
             placeholder="Buscar cita por paciente o tipo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
-        <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-lg self-start md:self-auto">
+        <div className="flex items-center bg-slate-100 dark:bg-slate-200 p-1 rounded-lg self-start md:self-auto">
           <button
             onClick={() => setViewMode('calendar')}
             className={`flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
               viewMode === 'calendar'
-                ? 'bg-white dark:bg-slate-700 text-[#215732] dark:text-green-400 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                ? 'bg-[#215732] text-white shadow-sm'
+                : 'text-slate-500 hover:text-slate-700 dark:text-slate-600'
             }`}
           >
             <CalendarIcon className="h-4 w-4 mr-2" />
@@ -267,8 +267,8 @@ export function Agenda() {
             onClick={() => setViewMode('list')}
             className={`flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
               viewMode === 'list'
-                ? 'bg-white dark:bg-slate-700 text-[#215732] dark:text-green-400 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                ? 'bg-[#215732] text-white shadow-sm'
+                : 'text-slate-500 hover:text-slate-700 dark:text-slate-600'
             }`}
           >
             <List className="h-4 w-4 mr-2" />
@@ -281,7 +281,7 @@ export function Agenda() {
         {viewMode === 'calendar' ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1">
-              <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4">
+              <div className="bg-white dark:bg-slate-50 rounded-xl shadow-sm border border-slate-200 dark:border-slate-300 p-4">
                 <Calendar
                   onChange={(val) => setSelectedDate(val as Date)}
                   value={selectedDate}
@@ -297,7 +297,7 @@ export function Agenda() {
                 />
               </div>
               
-              <div className="mt-6 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4">
+              <div className="mt-6 bg-white dark:bg-slate-50 rounded-xl shadow-sm border border-slate-200 dark:border-slate-300 p-4">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center">
                   <Clock className="h-4 w-4 mr-2 text-[#215732]" />
                   Citas para el {format(selectedDate, "d 'de' MMMM", { locale: es })}
@@ -330,9 +330,9 @@ export function Agenda() {
             </div>
 
             <div className="lg:col-span-2 space-y-4">
-              <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+              <div className="bg-white dark:bg-slate-50 rounded-xl shadow-sm border border-slate-200 dark:border-slate-300 p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">Detalle de Citas</h2>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-slate-900">Detalle de Citas</h2>
                   <span className="text-sm text-slate-500">{appointments.filter(apt => isSameDay(new Date(apt.date), selectedDate)).length} citas hoy</span>
                 </div>
                 
@@ -422,28 +422,28 @@ export function Agenda() {
             </div>
           </div>
         ) : (
-          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+          <div className="bg-white dark:bg-slate-50 rounded-xl shadow-sm border border-slate-200 dark:border-slate-300 overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-                <thead className="bg-slate-50 dark:bg-slate-800/50">
+              <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-300">
+                <thead className="bg-slate-50 dark:bg-slate-100">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Paciente</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Fecha y Hora</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tipo</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Estado</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Acciones</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-500 uppercase tracking-wider">Paciente</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-500 uppercase tracking-wider">Fecha y Hora</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-500 uppercase tracking-wider">Tipo</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-500 uppercase tracking-wider">Estado</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-500 uppercase tracking-wider">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800">
+                <tbody className="bg-white dark:bg-slate-50 divide-y divide-slate-200 dark:divide-slate-300">
                   {filteredAppointments.map((apt) => (
-                    <tr key={apt.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <tr key={apt.id} className="hover:bg-slate-50 dark:hover:bg-slate-100 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-8 w-8 rounded-full bg-[#215732]/10 flex items-center justify-center text-[#215732] text-xs font-bold">
                             {apt.patientName.charAt(0)}
                           </div>
                           <div className="ml-3">
-                            <div className="text-sm font-medium text-slate-900 dark:text-white">{apt.patientName}</div>
+                            <div className="text-sm font-medium text-slate-900 dark:text-slate-900">{apt.patientName}</div>
                           </div>
                         </div>
                       </td>

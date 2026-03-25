@@ -148,18 +148,18 @@ body {
 }
 
 .react-calendar__tile--active {
-  background: #16a34a !important;
+  background: #215732 !important;
   color: white !important;
 }
 
 .react-calendar__tile--hasActive {
-  background: #dcfce7;
+  background: #215732/20;
 }
 
 .dot-indicator {
   height: 6px;
   width: 6px;
-  background-color: #16a34a;
+  background-color: #215732;
   border-radius: 50%;
   display: inline-block;
   position: absolute;
