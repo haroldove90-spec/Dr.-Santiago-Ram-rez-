@@ -122,8 +122,8 @@ export function Reports() {
               <p className="text-sm font-medium text-slate-500">Ingresos Semana</p>
               <p className="text-2xl font-bold text-[#215732] mt-1">${weeklyIncome}</p>
             </div>
-            <div className="p-3 bg-blue-50 rounded-full">
-              <DollarSign className="h-6 w-6 text-blue-600" />
+            <div className="p-3 bg-green-50 rounded-full">
+              <DollarSign className="h-6 w-6 text-[#215732]" />
             </div>
           </div>
           <div className="mt-4 flex items-center text-sm text-green-600">

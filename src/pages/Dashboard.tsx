@@ -53,7 +53,7 @@ export function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const isSyncingLocal = patientsLocal || appointmentsLocal;
-  const COLORS = ['#215732', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'];
+  const COLORS = ['#215732', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444'];
 
   useEffect(() => {
     const loadStats = async () => {
@@ -174,7 +174,7 @@ export function Dashboard() {
   }
 
   const statCards = [
-    { name: 'Pacientes Totales', value: dashboardData.totalPatients, label: 'Expedientes', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { name: 'Pacientes Totales', value: dashboardData.totalPatients, label: 'Expedientes', icon: Users, color: 'text-[#215732]', bg: 'bg-green-50' },
     { name: 'Alertas Críticas', value: dashboardData.criticalAlerts, label: 'Seguimiento', icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50' },
     { name: 'Ingresos Hoy', value: `$${dashboardData.todayRevenue}`, label: 'MXN', icon: DollarSign, color: 'text-emerald-600', bg: 'bg-emerald-50' },
     { name: 'Citas Hoy', value: dashboardData.todayAptsCount, label: 'Programadas', icon: Calendar, color: 'text-purple-600', bg: 'bg-purple-50' },
@@ -210,7 +210,7 @@ export function Dashboard() {
             </div>
             <input
               type="text"
-              className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#215732]/20 focus:border-[#215732] sm:text-sm transition-all shadow-sm"
+              className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl leading-5 bg-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#215732]/20 focus:border-[#215732] sm:text-sm transition-all shadow-sm"
               placeholder="Buscar paciente por nombre o HC..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -449,10 +449,10 @@ export function Dashboard() {
 
         <Link to="/scales" className="group p-6 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-all">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-blue-50 rounded-xl">
-              <BarChart3 className="w-6 h-6 text-blue-600" />
+            <div className="p-3 bg-green-50 rounded-xl">
+              <BarChart3 className="w-6 h-6 text-[#215732]" />
             </div>
-            <ArrowRight className="w-5 h-5 text-slate-300 group-hover:text-blue-600 transition-colors" />
+            <ArrowRight className="w-5 h-5 text-slate-300 group-hover:text-[#215732] transition-colors" />
           </div>
           <h4 className="text-lg font-bold text-slate-900">Escalas Clínicas</h4>
           <p className="text-slate-500 text-sm mt-1">NIHSS, Rankin y evaluaciones rápidas</p>

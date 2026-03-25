@@ -54,7 +54,7 @@ export function Settings() {
         {/* Database Status Section */}
         <div className="p-6 border-b border-slate-200 bg-slate-50/30">
           <h2 className="text-lg font-medium text-slate-900 flex items-center mb-4">
-            <Database className="h-5 w-5 mr-2 text-indigo-600" />
+            <Database className="h-5 w-5 mr-2 text-[#215732]" />
             Estado de la Base de Datos
           </h2>
           <div className="flex items-center justify-between p-4 rounded-lg border bg-white">
@@ -85,7 +85,7 @@ export function Settings() {
           <div className="mt-4 flex justify-end space-x-3">
             <button
               onClick={handleSeedData}
-              className="inline-flex items-center px-3 py-1.5 border border-slate-300 shadow-sm text-xs font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="inline-flex items-center px-3 py-1.5 border border-slate-300 shadow-sm text-xs font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
             >
               <Database className="-ml-1 mr-2 h-3 w-3" />
               Cargar Datos de Ejemplo

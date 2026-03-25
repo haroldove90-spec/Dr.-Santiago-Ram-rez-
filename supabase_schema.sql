@@ -73,12 +73,24 @@ CREATE TABLE IF NOT EXISTS prescriptions (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- 6. Notifications Table
+CREATE TABLE IF NOT EXISTS notifications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  type TEXT DEFAULT 'info',
+  target_role TEXT, -- 'doctor', 'assistant', or null for all
+  read BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Enable Realtime for these tables
 ALTER PUBLICATION supabase_realtime ADD TABLE patients;
 ALTER PUBLICATION supabase_realtime ADD TABLE appointments;
 ALTER PUBLICATION supabase_realtime ADD TABLE medications;
 ALTER PUBLICATION supabase_realtime ADD TABLE clinical_scales;
 ALTER PUBLICATION supabase_realtime ADD TABLE prescriptions;
+ALTER PUBLICATION supabase_realtime ADD TABLE notifications;
 
 -- RLS Policies (Basic - Allow all for now, should be hardened later)
 ALTER TABLE patients ENABLE ROW LEVEL SECURITY;
@@ -86,9 +98,11 @@ ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE medications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE clinical_scales ENABLE ROW LEVEL SECURITY;
 ALTER TABLE prescriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow all access to authenticated users" ON patients FOR ALL USING (true);
 CREATE POLICY "Allow all access to authenticated users" ON appointments FOR ALL USING (true);
 CREATE POLICY "Allow all access to authenticated users" ON medications FOR ALL USING (true);
 CREATE POLICY "Allow all access to authenticated users" ON clinical_scales FOR ALL USING (true);
 CREATE POLICY "Allow all access to authenticated users" ON prescriptions FOR ALL USING (true);
+CREATE POLICY "Allow all access to authenticated users" ON notifications FOR ALL USING (true);

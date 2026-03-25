@@ -1004,7 +1004,7 @@ export function PatientDetail() {
           {activeTab === 'medications' && (
             <div className="bg-white shadow-sm rounded-xl p-6 border border-slate-200">
               <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
-                <Pill className="w-5 h-5 mr-2 text-blue-600" />
+                <Pill className="w-5 h-5 mr-2 text-[#215732]" />
                 Medicación Activa
               </h3>
               <div className="overflow-x-auto">

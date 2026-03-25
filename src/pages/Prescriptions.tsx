@@ -177,10 +177,7 @@ export function Prescriptions() {
     doc.text('Firma del Médico', 612 / 2, yPos, { align: 'center' });
 
     // Save and open for printing
-    const fileName = `Receta_${prescription.patientName.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd')}.pdf`;
-    doc.save(fileName);
-    
-    // Use a hidden iframe to trigger the print dialog
+    // Trigger the print dialog
     try {
       doc.autoPrint();
       const blob = doc.output('blob');
@@ -193,17 +190,20 @@ export function Prescriptions() {
       
       iframe.onload = () => {
         setTimeout(() => {
-          iframe.contentWindow?.print();
+          if (iframe.contentWindow) {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+          }
           // Cleanup
           setTimeout(() => {
             document.body.removeChild(iframe);
             URL.revokeObjectURL(url);
-          }, 1000);
+          }, 2000);
         }, 500);
       };
     } catch (e) {
       console.error('Error triggering print:', e);
-      addNotification('Error', 'No se pudo activar la impresora automáticamente. Por favor, imprima el archivo descargado.', 'error');
+      addNotification('Error', 'No se pudo activar la impresora automáticamente. Por favor, intente de nuevo.', 'error');
     }
   };
 

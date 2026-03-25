@@ -83,7 +83,7 @@ export function Patients() {
       
       // Notify Specialist if current user is Assistant
       if (role === 'assistant') {
-        addNotification('Aviso al Especialista', `La asistente ha registrado un nuevo paciente: ${patient.firstName} ${patient.lastName}`, 'info');
+        addNotification('Aviso al Especialista', `La asistente ha registrado un nuevo paciente: ${patient.firstName} ${patient.lastName}`, 'info', 'doctor');
       }
 
       setIsModalOpen(false);

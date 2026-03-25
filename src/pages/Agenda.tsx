@@ -120,7 +120,7 @@ export function Agenda() {
       
       // Notify Specialist if current user is Assistant
       if (role === 'assistant') {
-        addNotification('Aviso al Especialista', `La asistente ha agendado una nueva cita para ${patientName} el ${format(date, 'dd/MM/yyyy HH:mm')}`, 'info');
+        addNotification('Aviso al Especialista', `La asistente ha agendado una nueva cita para ${patientName} el ${format(date, 'dd/MM/yyyy HH:mm')}`, 'info', 'doctor');
       }
 
       setNewAppointment({ patientId: '', date: '', time: '', type: 'Consulta General', cost: '' });
@@ -169,7 +169,7 @@ export function Agenda() {
     switch (status) {
       case 'confirmed': return 'bg-green-100 text-green-800 border-green-200';
       case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
-      case 'completed': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'completed': return 'bg-green-100 text-green-800 border-green-200';
       default: return 'bg-slate-100 text-slate-800 border-slate-200';
     }
   };
@@ -244,7 +244,7 @@ export function Agenda() {
           </div>
           <input
             type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md leading-5 bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white placeholder-slate-500 focus:outline-none focus:placeholder-slate-400 focus:ring-1 focus:ring-[#215732] focus:border-[#215732] sm:text-sm transition duration-150 ease-in-out"
+            className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md leading-5 bg-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:text-white placeholder-slate-500 focus:outline-none focus:placeholder-slate-400 focus:ring-1 focus:ring-[#215732] focus:border-[#215732] sm:text-sm transition duration-150 ease-in-out"
             placeholder="Buscar cita por paciente o tipo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -318,7 +318,7 @@ export function Agenda() {
                         <div className={`h-2 w-2 rounded-full ${
                           apt.status === 'confirmed' ? 'bg-green-500' : 
                           apt.status === 'cancelled' ? 'bg-red-500' : 
-                          apt.status === 'completed' ? 'bg-blue-500' : 'bg-amber-500'
+                          apt.status === 'completed' ? 'bg-[#215732]' : 'bg-amber-500'
                         }`} />
                       </div>
                     ))}
@@ -379,7 +379,7 @@ export function Agenda() {
                               <>
                                 <button 
                                   onClick={() => updateStatus(apt.id, 'completed')}
-                                  className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                  className="p-1.5 text-[#215732] hover:bg-green-50 rounded-lg transition-colors"
                                   title="Completar"
                                 >
                                   <CheckCircle2 className="h-4 w-4" />
