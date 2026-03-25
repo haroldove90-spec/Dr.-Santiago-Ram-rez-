@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Settings, Activity, Mic, X, Calendar, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Settings, Activity, Mic, X, Calendar, LogOut, Plus } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useRole } from '../../context/RoleContext';
 
@@ -8,6 +8,7 @@ const navigation = [
   { name: 'Inicio', href: '/', icon: LayoutDashboard },
   { name: 'Agenda', href: '/agenda', icon: Calendar },
   { name: 'Pacientes', href: '/patients', icon: Users },
+  { name: 'Registrar Historial', href: '/patients?action=register', icon: Plus },
   { name: 'Recetas', href: '/prescriptions', icon: FileText },
   { name: 'Escalas Clínicas', href: '/scales', icon: Activity },
   { name: 'Dictado de Voz', href: '/dictation', icon: Mic },

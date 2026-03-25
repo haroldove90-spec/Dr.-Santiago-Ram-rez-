@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, Plus, User, Calendar, ChevronRight, X, Save } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { Search, Plus, User, Calendar, ChevronRight, X, Save, FileText } from 'lucide-react';
 import { Patient } from '@/types/patient';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -11,9 +11,22 @@ import { useRole } from '@/context/RoleContext';
 export function Patients() {
   const { patients, addPatient } = usePatients();
   const { role } = useRole();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const { addNotification } = useNotification();
+
+  useEffect(() => {
+    if (searchParams.get('action') === 'register') {
+      setIsHistoryModalOpen(true);
+      // Clear the param so it doesn't reopen on refresh
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('action');
+      setSearchParams(newParams);
+    }
+  }, [searchParams, setSearchParams]);
 
   // New Patient Form State
   const [newPatient, setNewPatient] = useState({
@@ -67,6 +80,12 @@ export function Patients() {
     try {
       await addPatient(patient);
       addNotification('Paciente Registrado', `${patient.firstName} ${patient.lastName} ha sido registrado exitosamente.`);
+      
+      // Notify Specialist if current user is Assistant
+      if (role === 'assistant') {
+        addNotification('Aviso al Especialista', `La asistente ha registrado un nuevo paciente: ${patient.firstName} ${patient.lastName}`, 'info');
+      }
+
       setIsModalOpen(false);
       setNewPatient({
         firstName: '',
@@ -122,13 +141,22 @@ export function Patients() {
             {role === 'doctor' ? 'Consultar y registrar historiales clínicos de pacientes.' : 'Ver y administrar expedientes de pacientes.'}
           </p>
         </div>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#215732] hover:bg-[#1a4528] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-        >
-          <Plus className="-ml-1 mr-2 h-4 w-4" />
-          Agregar Paciente
-        </button>
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <button 
+            onClick={() => setIsHistoryModalOpen(true)}
+            className="inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md shadow-sm text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          >
+            <FileText className="-ml-1 mr-2 h-4 w-4 text-slate-400" />
+            Registrar Historial
+          </button>
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#215732] hover:bg-[#1a4528] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          >
+            <Plus className="-ml-1 mr-2 h-4 w-4" />
+            Agregar Paciente
+          </button>
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -189,6 +217,77 @@ export function Patients() {
           </ul>
         )}
       </div>
+
+      {/* Registrar Historial Modal */}
+      {isHistoryModalOpen && (
+        <div className="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+          <div className="flex min-h-screen items-center justify-center p-4 text-center">
+            <div className="fixed inset-0 bg-slate-900/50 transition-opacity" aria-hidden="true" onClick={() => setIsHistoryModalOpen(false)}></div>
+
+            <div className="relative w-full max-w-lg transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg leading-6 font-medium text-slate-900" id="modal-title">
+                    Seleccionar Paciente para Historial
+                  </h3>
+                  <button onClick={() => setIsHistoryModalOpen(false)} className="text-slate-400 hover:text-slate-500">
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search className="h-4 w-4 text-slate-400" />
+                    </div>
+                    <input
+                      type="text"
+                      className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md leading-5 bg-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-[#215732] focus:border-[#215732] sm:text-sm"
+                      placeholder="Buscar paciente..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-md divide-y divide-slate-100">
+                    {filteredPatients.length === 0 ? (
+                      <div className="p-4 text-center text-slate-500 text-sm">No se encontraron pacientes.</div>
+                    ) : (
+                      filteredPatients.map(p => (
+                        <button
+                          key={p.id}
+                          onClick={() => navigate(`/patients/${p.id}?edit=true&tab=history`)}
+                          className="w-full text-left px-4 py-3 hover:bg-slate-50 flex items-center justify-between transition-colors"
+                        >
+                          <div>
+                            <p className="text-sm font-medium text-slate-900">{p.lastName}, {p.firstName}</p>
+                            <p className="text-xs text-slate-500">HC: {p.mrn}</p>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-slate-300" />
+                        </button>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-100">
+                    <p className="text-xs text-slate-500 mb-3">¿El paciente no está registrado?</p>
+                    <button
+                      onClick={() => {
+                        setIsHistoryModalOpen(false);
+                        setIsModalOpen(true);
+                      }}
+                      className="w-full inline-flex justify-center items-center rounded-md border border-slate-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none"
+                    >
+                      <Plus className="mr-2 h-4 w-4 text-slate-400" />
+                      Registrar Nuevo Paciente
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Patient Modal */}
       {isModalOpen && (

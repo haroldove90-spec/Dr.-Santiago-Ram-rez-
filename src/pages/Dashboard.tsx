@@ -30,6 +30,18 @@ import {
   startOfToday
 } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
 import { usePatients } from '../context/PatientContext';
 import { useAppointments } from '../context/AppointmentContext';
 
@@ -41,6 +53,7 @@ export function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const isSyncingLocal = patientsLocal || appointmentsLocal;
+  const COLORS = ['#215732', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'];
 
   useEffect(() => {
     const loadStats = async () => {
@@ -274,7 +287,7 @@ export function Dashboard() {
             </div>
             <TrendingUp className="w-5 h-5 text-emerald-500" />
           </div>
-          {/* <div className="h-[300px] w-full">
+          <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={dashboardData.revenueTrend}>
                 <defs>
@@ -310,9 +323,6 @@ export function Dashboard() {
                 />
               </AreaChart>
             </ResponsiveContainer>
-          </div> */}
-          <div className="h-[300px] w-full flex items-center justify-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
-            <p className="text-slate-400">Gráfico de ingresos (Temporalmente desactivado)</p>
           </div>
         </div>
 
@@ -361,7 +371,7 @@ export function Dashboard() {
             <h3 className="text-lg font-bold text-slate-900">Distribución</h3>
             <PieChartIcon className="w-5 h-5 text-slate-400" />
           </div>
-          {/* <div className="h-[200px] w-full">
+          <div className="h-[200px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -380,9 +390,6 @@ export function Dashboard() {
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
-          </div> */}
-          <div className="h-[200px] w-full flex items-center justify-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
-            <p className="text-slate-400 text-xs">Distribución (Desactivado)</p>
           </div>
         </div>
 

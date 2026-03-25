@@ -37,6 +37,7 @@ export function PatientDetail() {
     emergencyContact: '',
     advanceDirectives: '',
     chiefComplaint: '',
+    historyOfPresentIllness: '',
     symptomOnset: '',
     evolution: '',
     currentDeficit: '',
@@ -87,6 +88,7 @@ export function PatientDetail() {
           emergencyContact: foundPatient.contact.emergencyContact,
           advanceDirectives: foundPatient.history.advanceDirectives || '',
           chiefComplaint: foundPatient.history.chiefComplaint,
+          historyOfPresentIllness: foundPatient.history.historyOfPresentIllness || '',
           symptomOnset: foundPatient.history.symptomOnset || '',
           evolution: foundPatient.history.evolution || '',
           currentDeficit: foundPatient.history.currentDeficit || '',
@@ -97,7 +99,7 @@ export function PatientDetail() {
           allergies: foundPatient.history.allergies || '',
           generalExam: foundPatient.history.generalExam || '',
           gcsOcular: foundPatient.history.neurologicalExam?.gcs?.ocular || 4,
-          gcsVerbal: foundPatient.history.neurologicalExam?.gcs?.verbal || '5',
+          gcsVerbal: String(foundPatient.history.neurologicalExam?.gcs?.verbal || '5'),
           gcsMotor: foundPatient.history.neurologicalExam?.gcs?.motor || 6,
           cranialNerves: foundPatient.history.neurologicalExam?.cranialNerves || '',
           motorSystem: foundPatient.history.neurologicalExam?.motorSystem || '',
@@ -119,11 +121,13 @@ export function PatientDetail() {
           plan: foundPatient.history.plan || ''
         });
 
-        // Check for edit mode in location state
-        if (location.state && (location.state as any).editMode) {
+        // Check for edit mode in location state or query params
+        const params = new URLSearchParams(location.search);
+        if ((location.state && (location.state as any).editMode) || params.get('edit') === 'true') {
           setIsEditing(true);
-          if ((location.state as any).tab) {
-            setActiveTab((location.state as any).tab);
+          const tab = (location.state as any)?.tab || params.get('tab');
+          if (tab && ['history', 'medications', 'scales'].includes(tab)) {
+            setActiveTab(tab as any);
           }
         }
       } else {
@@ -133,7 +137,7 @@ export function PatientDetail() {
     };
 
     loadPatient();
-  }, [id, fetchPatientDetails, location.state]);
+  }, [id, fetchPatientDetails, location.state, location.search]);
 
   const handleSave = async () => {
     if (!patient || !id) return;

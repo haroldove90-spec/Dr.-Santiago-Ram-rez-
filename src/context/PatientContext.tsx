@@ -17,6 +17,7 @@ interface PatientContextType {
   addClinicalScale: (patientId: string, scaleData: any) => Promise<void>;
   fetchPatientDetails: (id: string) => Promise<Patient | null>;
   fetchRecentScalesCount: (days?: number) => Promise<number>;
+  seedExampleData: () => Promise<void>;
 }
 
 const PatientContext = createContext<PatientContextType | undefined>(undefined);
@@ -374,6 +375,74 @@ export function PatientProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const seedExampleData = async () => {
+    const examplePatients: Patient[] = [
+      {
+        id: 'baaaa521-2234-4a9b-8c7d-1e2f3g4h5i6j',
+        mrn: '0013',
+        firstName: 'Harold',
+        lastName: 'Anguiano',
+        dateOfBirth: '1970-11-19',
+        gender: 'male',
+        contact: {
+          phone: '555-0123',
+          email: 'harold.a@example.com',
+          emergencyContact: 'Martha Anguiano (Esposa) - 555-0987'
+        },
+        history: {
+          advanceDirectives: 'Desea reanimación completa. No tiene testamento vital.',
+          chiefComplaint: 'Cefalea intensa de inicio súbito y debilidad en hemicuerpo izquierdo.',
+          historyOfPresentIllness: 'Paciente masculino de 55 años con antecedentes de hipertensión arterial mal controlada. Inicia hace 2 horas con cefalea holocraneana 10/10, seguida de desviación de la comisura labial a la derecha y hemiparesia izquierda progresiva.',
+          symptomOnset: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
+          evolution: 'Aguda',
+          currentDeficit: 'Hemiparesia izquierda 3/5, disartria leve, hipoestesia ipsilateral.',
+          pastMedicalHistory: ['Hipertensión Arterial (10 años)', 'Diabetes Mellitus Tipo 2 (5 años)', 'Tabaquismo activo'],
+          surgicalHistory: 'Apendicectomía a los 15 años.',
+          familyHistory: ['Padre fallecido por EVC isquémico', 'Madre con DM2'],
+          socialHistory: 'Ingeniero civil, vive con su esposa y dos hijos. Sedentario.',
+          allergies: 'Penicilina (Rash)',
+          generalExam: 'TA: 180/110 mmHg, FC: 88 lpm, FR: 18 rpm, Temp: 36.5°C. Consciente, orientado en 3 esferas.',
+          neurologicalExam: {
+            gcs: { ocular: 4, verbal: 5, motor: 6, total: 15 },
+            cranialNerves: 'Par VII izquierdo central. Resto de pares craneales íntegros.',
+            motorSystem: 'Fuerza 3/5 en hemicuerpo izquierdo (proximal y distal). Tono normal.',
+            reflexes: 'Hiperreflexia izquierda ++/++++. Babinski izquierdo presente.',
+            sensorySystem: 'Hipoestesia termoalgésica en hemicuerpo izquierdo.',
+            coordinationAndGait: 'No valorable por déficit motor.',
+            meningealSigns: 'Ausentes'
+          },
+          imagingType: ['TC Simple de Cráneo'],
+          imagingDate: new Date().toISOString(),
+          imagingFindings: 'Imagen hipodensa en territorio de arteria cerebral media derecha, compatible con evento isquémico agudo.',
+          therapeuticDecision: 'Tratamiento Médico',
+          proposedProcedure: 'Trombólisis endovenosa con r-tPA.',
+          surgicalRisk: 'II',
+          assessment: 'EVC Isquémico agudo en territorio de ACM derecha. Ventana terapéutica abierta.',
+          plan: 'Ingreso a Unidad de Ictus, vigilancia neurológica estrecha, control de TA.'
+        },
+        medications: [
+          { id: 'm1', name: 'Aspirina', dosage: '100mg', frequency: 'Cada 24 horas', startDate: new Date().toISOString(), active: true },
+          { id: 'm2', name: 'Atorvastatina', dosage: '40mg', frequency: 'Cada 24 horas', startDate: new Date().toISOString(), active: true }
+        ],
+        clinicalScales: [
+          { id: 's1', name: 'NIHSS', score: 8, date: new Date().toISOString(), details: { '1a': 0, '1b': 0, '1c': 0, '2': 0, '3': 0, '4': 1, '5a': 2, '5b': 0, '6a': 2, '6b': 0, '7': 0, '8': 1, '9': 1, '10': 1, '11': 0 } }
+        ],
+        imagingStudies: [],
+        lastVisit: new Date().toISOString(),
+        alerts: ['Alergia: Penicilina', 'Hipertensión Severa']
+      }
+    ];
+
+    if (usingLocalStorage) {
+      localStorage.setItem('local_patients', JSON.stringify(examplePatients));
+      setPatients(examplePatients);
+    } else {
+      // For Supabase, we could try to insert them, but let's just update local state for now
+      // or provide a separate "Seed" button in Settings
+      setPatients(examplePatients);
+    }
+  };
+
   return (
     <PatientContext.Provider value={{ 
       patients, 
@@ -388,7 +457,8 @@ export function PatientProvider({ children }: { children: ReactNode }) {
       saveDictationResult,
       addClinicalScale,
       fetchPatientDetails,
-      fetchRecentScalesCount
+      fetchRecentScalesCount,
+      seedExampleData // Add this to context
     }}>
       {children}
     </PatientContext.Provider>

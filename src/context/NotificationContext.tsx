@@ -7,19 +7,18 @@ interface Notification {
   message: string;
   timestamp: Date;
   read: boolean;
+  type?: 'info' | 'warning' | 'error' | 'success';
 }
 
 interface NotificationContextType {
   notifications: Notification[];
-  addNotification: (title: string, message: string) => void;
+  addNotification: (title: string, message: string, type?: Notification['type']) => void;
   removeNotification: (id: string) => void;
   requestPermission: () => Promise<void>;
   permission: NotificationPermission;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
-
-const NOTIFICATION_SOUND = 'data:audio/mp3;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq'; // Placeholder, will replace with real base64 if needed, or use Audio API
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -32,7 +31,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const playSound = () => {
-    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); // Using a public URL for now as base64 is long
+    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
     audio.play().catch(e => console.log('Audio play failed', e));
   };
 
@@ -43,7 +42,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addNotification = (title: string, message: string) => {
+  const addNotification = (title: string, message: string, type: Notification['type'] = 'success') => {
     const id = Date.now().toString();
     const newNotification: Notification = {
       id,
@@ -51,6 +50,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       message,
       timestamp: new Date(),
       read: false,
+      type,
     };
 
     setNotifications(prev => [newNotification, ...prev]);
@@ -63,10 +63,14 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     // Show system notification if permitted
     if (permission === 'granted') {
-      new Notification(title, {
-        body: message,
-        icon: '/vite.svg'
-      });
+      try {
+        new Notification(title, {
+          body: message,
+          icon: '/vite.svg'
+        });
+      } catch (e) {
+        console.error('Failed to show system notification', e);
+      }
     }
   };
 
@@ -82,10 +86,20 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         {notifications.slice(0, 5).map((notif) => (
           <div 
             key={notif.id} 
-            className="bg-white border-l-4 border-green-600 shadow-2xl rounded-lg p-4 flex items-start animate-in slide-in-from-right duration-300 w-80 pointer-events-auto ring-1 ring-black/5"
+            className={`bg-white border-l-4 ${
+              notif.type === 'error' ? 'border-red-600' : 
+              notif.type === 'warning' ? 'border-amber-500' : 
+              notif.type === 'info' ? 'border-blue-500' : 
+              'border-green-600'
+            } shadow-2xl rounded-lg p-4 flex items-start animate-in slide-in-from-right duration-300 w-80 pointer-events-auto ring-1 ring-black/5`}
           >
             <div className="flex-shrink-0">
-              <Bell className="h-5 w-5 text-green-500" />
+              <Bell className={`h-5 w-5 ${
+                notif.type === 'error' ? 'text-red-500' : 
+                notif.type === 'warning' ? 'text-amber-500' : 
+                notif.type === 'info' ? 'text-blue-500' : 
+                'text-green-500'
+              }`} />
             </div>
             <div className="ml-3 w-0 flex-1 pt-0.5">
               <p className="text-sm font-semibold text-gray-900">{notif.title}</p>

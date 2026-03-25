@@ -2,18 +2,28 @@ import React, { useState } from 'react';
 import { User, Bell, Shield, Moon, Globe, Save, Clock, Calendar, Database, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useNotification } from '@/context/NotificationContext';
 import { usePatients } from '@/context/PatientContext';
+import { useTheme } from '@/context/ThemeContext';
 
 export function Settings() {
   const [notifications, setNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, toggleDarkMode } = useTheme();
   const { addNotification } = useNotification();
-  const { isConfigured, fetchPatients } = usePatients();
+  const { isConfigured, refreshPatients, seedExampleData } = usePatients();
   const [testingConnection, setTestingConnection] = useState(false);
+
+  const handleSeedData = async () => {
+    try {
+      await seedExampleData();
+      addNotification('Datos de Ejemplo Cargados', 'Se han cargado registros de prueba exitosamente.');
+    } catch (error) {
+      addNotification('Error', 'No se pudieron cargar los datos de ejemplo.');
+    }
+  };
 
   const testConnection = async () => {
     setTestingConnection(true);
     try {
-      await fetchPatients();
+      await refreshPatients();
       addNotification('Conexión Exitosa', 'Se ha establecido conexión con la base de datos correctamente.');
     } catch (err) {
       addNotification('Error de Conexión', 'No se pudo conectar con Supabase. Verifique sus credenciales.');
@@ -72,7 +82,14 @@ export function Settings() {
               </div>
             )}
           </div>
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 flex justify-end space-x-3">
+            <button
+              onClick={handleSeedData}
+              className="inline-flex items-center px-3 py-1.5 border border-slate-300 shadow-sm text-xs font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              <Database className="-ml-1 mr-2 h-3 w-3" />
+              Cargar Datos de Ejemplo
+            </button>
             <button
               onClick={testConnection}
               disabled={testingConnection}
@@ -94,7 +111,8 @@ export function Settings() {
           {!isConfigured && (
             <div className="mt-4 p-4 bg-amber-50 border border-amber-100 rounded-lg">
               <p className="text-xs text-amber-800 leading-relaxed">
-                <strong>Nota:</strong> Si estás viendo este mensaje en una implementación de Vercel, asegúrate de haber agregado las variables <code>VITE_SUPABASE_URL</code> y <code>VITE_SUPABASE_ANON_KEY</code> en la configuración del proyecto en el panel de Vercel.
+                <strong>Nota:</strong> Si estás viendo este mensaje, asegúrate de haber configurado las variables <code>VITE_SUPABASE_URL</code> y <code>VITE_SUPABASE_ANON_KEY</code>. 
+                Para que la sincronización funcione, también debes ejecutar el script SQL en <strong>/supabase_schema.sql</strong> en tu panel de Supabase.
               </p>
             </div>
           )}
@@ -208,7 +226,7 @@ export function Settings() {
                 </div>
               </div>
               <button
-                onClick={() => setDarkMode(!darkMode)}
+                onClick={toggleDarkMode}
                 className={`relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${darkMode ? 'bg-green-600' : 'bg-slate-200'}`}
               >
                 <span className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200 ${darkMode ? 'translate-x-5' : 'translate-x-0'}`} />

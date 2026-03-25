@@ -4,9 +4,10 @@ import { useRole } from '../context/RoleContext';
 import { useNotification } from '../context/NotificationContext';
 import { usePatients } from '../context/PatientContext';
 import { useAppointments, Appointment } from '../context/AppointmentContext';
-import { Calendar, Clock, User, Plus, Check, X, MoreVertical, DollarSign, AlertCircle, Search } from 'lucide-react';
-import { format, addDays, startOfWeek, addHours } from 'date-fns';
+import { Calendar as CalendarIcon, Clock, User, Plus, Check, X, MoreVertical, DollarSign, AlertCircle, Search, List, CheckCircle2 } from 'lucide-react';
+import { format, addDays, startOfWeek, addHours, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
+import Calendar from 'react-calendar';
 
 export function Agenda() {
   const { role } = useRole();
@@ -16,6 +17,8 @@ export function Agenda() {
   const navigate = useNavigate();
   
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('calendar');
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isNewPatient, setIsNewPatient] = useState(false);
 
   const [newPatientData, setNewPatientData] = useState({
@@ -115,6 +118,11 @@ export function Agenda() {
 
       addNotification('Nueva Cita Agendada', `Cita para ${patientName} el ${format(date, 'dd/MM/yyyy HH:mm')}`);
       
+      // Notify Specialist if current user is Assistant
+      if (role === 'assistant') {
+        addNotification('Aviso al Especialista', `La asistente ha agendado una nueva cita para ${patientName} el ${format(date, 'dd/MM/yyyy HH:mm')}`, 'info');
+      }
+
       setNewAppointment({ patientId: '', date: '', time: '', type: 'Consulta General', cost: '' });
       setNewPatientData({ firstName: '', lastName: '', mrn: '', dateOfBirth: '', gender: 'male' });
       setIsNewPatient(false);
@@ -228,92 +236,251 @@ export function Agenda() {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative max-w-md">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-slate-400" />
+      {/* View Toggle and Search Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="relative max-w-md w-full">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-slate-400" />
+          </div>
+          <input
+            type="text"
+            className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md leading-5 bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white placeholder-slate-500 focus:outline-none focus:placeholder-slate-400 focus:ring-1 focus:ring-[#215732] focus:border-[#215732] sm:text-sm transition duration-150 ease-in-out"
+            placeholder="Buscar cita por paciente o tipo..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-        <input
-          type="text"
-          className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md leading-5 bg-white placeholder-slate-500 focus:outline-none focus:placeholder-slate-400 focus:ring-1 focus:ring-[#215732] focus:border-[#215732] sm:text-sm transition duration-150 ease-in-out"
-          placeholder="Buscar cita por paciente o tipo..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+
+        <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-lg self-start md:self-auto">
+          <button
+            onClick={() => setViewMode('calendar')}
+            className={`flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+              viewMode === 'calendar'
+                ? 'bg-white dark:bg-slate-700 text-[#215732] dark:text-green-400 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+            }`}
+          >
+            <CalendarIcon className="h-4 w-4 mr-2" />
+            Calendario
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+              viewMode === 'list'
+                ? 'bg-white dark:bg-slate-700 text-[#215732] dark:text-green-400 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+            }`}
+          >
+            <List className="h-4 w-4 mr-2" />
+            Lista
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {/* Calendar View (Simplified) */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
-            <Calendar className="h-5 w-5 mr-2 text-[#215732]" />
-            Próximas Citas
-          </h2>
-          <div className="space-y-4">
-            {filteredAppointments.map((apt) => (
-              <div key={apt.id} className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border transition-colors ${apt.status === 'cancelled' ? 'bg-slate-50 opacity-75' : 'bg-white hover:border-[#215732]/50'} border-slate-200`}>
-                <div 
-                  className="flex items-center space-x-4 mb-4 sm:mb-0 cursor-pointer hover:bg-slate-50 p-2 rounded-lg -ml-2"
-                  onClick={() => handlePatientClick(apt.patientId, apt.patientName)}
-                >
-                  <div className={`p-2 rounded-full ${apt.status === 'cancelled' ? 'bg-slate-200 text-slate-500' : 'bg-[#215732]/10 text-[#215732]'}`}>
-                    <User className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className={`font-medium hover:text-[#215732] hover:underline ${apt.status === 'cancelled' ? 'text-slate-500 line-through' : 'text-slate-900'}`}>{apt.patientName}</p>
-                    <p className="text-sm text-slate-500">{apt.type}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between sm:justify-end gap-4">
-                  <div className="text-right mr-4 flex flex-col items-end">
-                    <p className="font-medium text-slate-900 flex items-center">
-                      <DollarSign className="h-4 w-4 mr-1 text-slate-400" />
-                      ${apt.cost}
-                    </p>
-                    <p className="font-medium text-slate-900 flex items-center justify-end">
-                      <Clock className="h-4 w-4 mr-1 text-slate-400" />
-                      {format(apt.date, 'HH:mm')}
-                    </p>
-                    <p className="text-sm text-slate-500 capitalize">
-                      {format(apt.date, 'EEEE d MMM', { locale: es })}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col items-end gap-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(apt.status)}`}>
-                      {getStatusLabel(apt.status)}
-                    </span>
-                    
-                    {apt.status === 'scheduled' && (
-                      <div className="flex space-x-1">
-                        <button 
-                          onClick={() => updateStatus(apt.id, 'confirmed')}
-                          className="p-1 text-green-600 hover:bg-green-50 rounded"
-                          title="Confirmar"
-                        >
-                          <Check className="h-4 w-4" />
-                        </button>
-                        <button 
-                          onClick={() => updateStatus(apt.id, 'cancelled')}
-                          className="p-1 text-red-600 hover:bg-red-50 rounded"
-                          title="Cancelar"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
+        {viewMode === 'calendar' ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1">
+              <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4">
+                <Calendar
+                  onChange={(val) => setSelectedDate(val as Date)}
+                  value={selectedDate}
+                  locale="es-ES"
+                  className="border-none shadow-none"
+                  tileContent={({ date, view }) => {
+                    if (view === 'month') {
+                      const hasApt = appointments.some(apt => isSameDay(new Date(apt.date), date));
+                      return hasApt ? <div className="dot-indicator" /> : null;
+                    }
+                    return null;
+                  }}
+                />
+              </div>
+              
+              <div className="mt-6 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center">
+                  <Clock className="h-4 w-4 mr-2 text-[#215732]" />
+                  Citas para el {format(selectedDate, "d 'de' MMMM", { locale: es })}
+                </h3>
+                <div className="space-y-3">
+                  {appointments
+                    .filter(apt => isSameDay(new Date(apt.date), selectedDate))
+                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                    .map(apt => (
+                      <div key={apt.id} className="flex items-center p-3 rounded-lg border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                        <div className="flex-shrink-0 w-12 text-center">
+                          <p className="text-xs font-bold text-[#215732] dark:text-green-400">{format(new Date(apt.date), 'HH:mm')}</p>
+                        </div>
+                        <div className="ml-3 flex-1">
+                          <p className="text-sm font-medium text-slate-900 dark:text-white">{apt.patientName}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">{apt.type}</p>
+                        </div>
+                        <div className={`h-2 w-2 rounded-full ${
+                          apt.status === 'confirmed' ? 'bg-green-500' : 
+                          apt.status === 'cancelled' ? 'bg-red-500' : 
+                          apt.status === 'completed' ? 'bg-blue-500' : 'bg-amber-500'
+                        }`} />
                       </div>
-                    )}
-                  </div>
+                    ))}
+                  {appointments.filter(apt => isSameDay(new Date(apt.date), selectedDate)).length === 0 && (
+                    <p className="text-xs text-center text-slate-500 py-4 italic">No hay citas para este día.</p>
+                  )}
                 </div>
               </div>
-            ))}
-            {filteredAppointments.length === 0 && (
-              <p className="text-slate-500 text-center py-8">
-                {searchTerm ? 'No se encontraron citas que coincidan con la búsqueda.' : 'No hay citas programadas.'}
-              </p>
-            )}
+            </div>
+
+            <div className="lg:col-span-2 space-y-4">
+              <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">Detalle de Citas</h2>
+                  <span className="text-sm text-slate-500">{appointments.filter(apt => isSameDay(new Date(apt.date), selectedDate)).length} citas hoy</span>
+                </div>
+                
+                <div className="space-y-4">
+                  {appointments
+                    .filter(apt => isSameDay(new Date(apt.date), selectedDate))
+                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                    .map(apt => (
+                      <div key={apt.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:shadow-md transition-all gap-4">
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 rounded-full bg-[#215732]/10 flex items-center justify-center text-[#215732] font-bold">
+                            {apt.patientName.charAt(0)}
+                          </div>
+                          <div>
+                            <h4 className="text-base font-bold text-slate-900 dark:text-white">{apt.patientName}</h4>
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className="flex items-center text-xs text-slate-500 dark:text-slate-400">
+                                <Clock className="h-3 w-3 mr-1" />
+                                {format(new Date(apt.date), 'HH:mm')}
+                              </span>
+                              <span className="flex items-center text-xs text-slate-500 dark:text-slate-400">
+                                <AlertCircle className="h-3 w-3 mr-1" />
+                                {apt.type}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(apt.status)}`}>
+                            {getStatusLabel(apt.status)}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            {apt.status === 'scheduled' && (
+                              <button 
+                                onClick={() => updateStatus(apt.id, 'confirmed')}
+                                className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                title="Confirmar"
+                              >
+                                <Check className="h-4 w-4" />
+                              </button>
+                            )}
+                            {apt.status !== 'completed' && apt.status !== 'cancelled' && (
+                              <>
+                                <button 
+                                  onClick={() => updateStatus(apt.id, 'completed')}
+                                  className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                  title="Completar"
+                                >
+                                  <CheckCircle2 className="h-4 w-4" />
+                                </button>
+                                <button 
+                                  onClick={() => updateStatus(apt.id, 'cancelled')}
+                                  className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                  title="Cancelar"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </>
+                            )}
+                            <button 
+                              onClick={() => handlePatientClick(apt.patientId, apt.patientName)}
+                              className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg transition-colors"
+                              title="Ver Paciente"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  
+                  {appointments.filter(apt => isSameDay(new Date(apt.date), selectedDate)).length === 0 && (
+                    <div className="text-center py-12">
+                      <CalendarIcon className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                      <p className="text-slate-500">No hay citas programadas para este día.</p>
+                      <button 
+                        onClick={() => setIsModalOpen(true)}
+                        className="mt-4 text-[#215732] font-medium hover:underline"
+                      >
+                        Agendar una nueva cita
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+                <thead className="bg-slate-50 dark:bg-slate-800/50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Paciente</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Fecha y Hora</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tipo</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Estado</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800">
+                  {filteredAppointments.map((apt) => (
+                    <tr key={apt.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="h-8 w-8 rounded-full bg-[#215732]/10 flex items-center justify-center text-[#215732] text-xs font-bold">
+                            {apt.patientName.charAt(0)}
+                          </div>
+                          <div className="ml-3">
+                            <div className="text-sm font-medium text-slate-900 dark:text-white">{apt.patientName}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-slate-900 dark:text-white">{format(new Date(apt.date), 'dd/MM/yyyy')}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">{format(new Date(apt.date), 'HH:mm')}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-slate-900 dark:text-white">{apt.type}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(apt.status)}`}>
+                          {getStatusLabel(apt.status)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-end gap-2">
+                          {apt.status === 'scheduled' && (
+                            <button onClick={() => updateStatus(apt.id, 'confirmed')} className="text-green-600 hover:text-green-900">Confirmar</button>
+                          )}
+                          <button onClick={() => handlePatientClick(apt.patientId, apt.patientName)} className="text-[#215732] hover:text-[#1a4528]">Ver</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredAppointments.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-10 text-center text-slate-500">
+                        No se encontraron citas que coincidan con la búsqueda.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Add Appointment Modal */}

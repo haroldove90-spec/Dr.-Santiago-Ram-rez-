@@ -4,6 +4,8 @@ import { useNotification } from '../context/NotificationContext';
 import { FileText, Plus, Printer, Search, User, Pill, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 interface Prescription {
   id: string;
@@ -28,6 +30,16 @@ export function Prescriptions() {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([
     {
       id: '1',
+      patientName: 'Harold Anguiano',
+      date: new Date().toISOString(),
+      medications: [
+        { name: 'Aspirina', dosage: '100mg', frequency: 'Cada 24 horas', duration: '30 días' },
+        { name: 'Atorvastatina', dosage: '40mg', frequency: 'Cada 24 horas', duration: '30 días' }
+      ],
+      notes: 'Tomar después de la cena.'
+    },
+    {
+      id: '2',
       patientName: 'Maria Garcia',
       date: new Date().toISOString(),
       medications: [
@@ -37,7 +49,7 @@ export function Prescriptions() {
       notes: 'Tomar con alimentos.'
     },
     {
-      id: '2',
+      id: '3',
       patientName: 'Jose Rodriguez',
       date: new Date(Date.now() - 86400000).toISOString(), // Yesterday
       medications: [
@@ -87,8 +99,112 @@ export function Prescriptions() {
   };
 
   const handlePrint = (prescription: Prescription) => {
-    addNotification('Imprimiendo', `Imprimiendo receta de ${prescription.patientName}...`);
-    // Logic to open print window would go here
+    addNotification('Generando PDF', `Preparando receta de ${prescription.patientName}...`);
+    
+    const doc = new jsPDF('p', 'pt', 'letter');
+    const margin = 40;
+    let yPos = margin;
+
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(33, 87, 50); // #215732
+    doc.setFont('helvetica', 'bold');
+    doc.text('Dr. Noe Santiago', margin, yPos);
+    yPos += 25;
+    
+    doc.setFontSize(12);
+    doc.setTextColor(100);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Neurocirujano', margin, yPos);
+    yPos += 15;
+    doc.text('Cédula Profesional: 12345678', margin, yPos);
+    yPos += 30;
+
+    // Line separator
+    doc.setDrawColor(33, 87, 50);
+    doc.setLineWidth(2);
+    doc.line(margin, yPos, 612 - margin, yPos);
+    yPos += 40;
+
+    // Prescription Info
+    doc.setFontSize(14);
+    doc.setTextColor(0);
+    doc.setFont('helvetica', 'bold');
+    doc.text('RECETA MÉDICA', 612 / 2, yPos, { align: 'center' });
+    yPos += 40;
+
+    doc.setFontSize(12);
+    doc.text(`Paciente: ${prescription.patientName}`, margin, yPos);
+    doc.text(`Fecha: ${format(new Date(prescription.date), 'dd/MM/yyyy')}`, 612 - margin, yPos, { align: 'right' });
+    yPos += 40;
+
+    // Medications Table
+    const tableData = prescription.medications.map(m => [
+      m.name,
+      m.dosage,
+      m.frequency,
+      m.duration
+    ]);
+
+    (doc as any).autoTable({
+      startY: yPos,
+      head: [['Medicamento', 'Dosis', 'Frecuencia', 'Duración']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: { fillColor: [33, 87, 50] },
+      margin: { left: margin, right: margin }
+    });
+
+    yPos = (doc as any).lastAutoTable.finalY + 40;
+
+    // Notes
+    if (prescription.notes) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Indicaciones:', margin, yPos);
+      yPos += 20;
+      doc.setFont('helvetica', 'normal');
+      const splitNotes = doc.splitTextToSize(prescription.notes, 612 - 2 * margin);
+      doc.text(splitNotes, margin, yPos);
+      yPos += splitNotes.length * 15 + 60;
+    }
+
+    // Footer / Signature
+    doc.setDrawColor(200);
+    doc.setLineWidth(1);
+    doc.line(612 / 2 - 100, yPos, 612 / 2 + 100, yPos);
+    yPos += 15;
+    doc.setFontSize(10);
+    doc.text('Firma del Médico', 612 / 2, yPos, { align: 'center' });
+
+    // Save and open for printing
+    const fileName = `Receta_${prescription.patientName.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd')}.pdf`;
+    doc.save(fileName);
+    
+    // Use a hidden iframe to trigger the print dialog
+    try {
+      doc.autoPrint();
+      const blob = doc.output('blob');
+      const url = URL.createObjectURL(blob);
+      
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = url;
+      document.body.appendChild(iframe);
+      
+      iframe.onload = () => {
+        setTimeout(() => {
+          iframe.contentWindow?.print();
+          // Cleanup
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+            URL.revokeObjectURL(url);
+          }, 1000);
+        }, 500);
+      };
+    } catch (e) {
+      console.error('Error triggering print:', e);
+      addNotification('Error', 'No se pudo activar la impresora automáticamente. Por favor, imprima el archivo descargado.', 'error');
+    }
   };
 
   const filteredPrescriptions = prescriptions.filter(p => 

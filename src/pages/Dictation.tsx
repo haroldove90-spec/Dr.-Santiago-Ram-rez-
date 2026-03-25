@@ -34,14 +34,11 @@ export function Dictation() {
       rec.lang = 'es-MX';
 
       rec.onresult = (event: any) => {
-        let interimTranscript = '';
         let finalTranscript = '';
 
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
             finalTranscript += event.results[i][0].transcript;
-          } else {
-            interimTranscript += event.results[i][0].transcript;
           }
         }
         
@@ -52,7 +49,14 @@ export function Dictation() {
 
       rec.onerror = (event: any) => {
         console.error('Speech recognition error', event.error);
-        setError(`Error de reconocimiento de voz: ${event.error}`);
+        if (event.error === 'not-allowed') {
+          setError('Permiso de micrófono denegado. Por favor, habilite el micrófono en su navegador.');
+        } else if (event.error === 'no-speech') {
+          // Ignore no-speech errors as they are common
+          return;
+        } else {
+          setError(`Error de reconocimiento de voz: ${event.error}`);
+        }
         setIsRecording(false);
       };
 
@@ -61,8 +65,20 @@ export function Dictation() {
       };
 
       setRecognition(rec);
+    } else {
+      setError('El reconocimiento de voz no es compatible con este navegador.');
     }
-  }, []);
+
+    return () => {
+      if (recognition) {
+        try {
+          recognition.stop();
+        } catch (e) {
+          // Ignore errors on cleanup
+        }
+      }
+    };
+  }, [recognition]);
 
   const saveToRecord = async () => {
     if (!selectedPatientId || !structuredData) return;
@@ -88,11 +104,20 @@ export function Dictation() {
     }
 
     if (isRecording) {
-      recognition.stop();
+      try {
+        recognition.stop();
+      } catch (e) {
+        console.error('Failed to stop recognition', e);
+      }
       setIsRecording(false);
     } else {
       setError(null);
       try {
+        // Request notification permission if not granted
+        if ("Notification" in window && Notification.permission === "default") {
+          Notification.requestPermission();
+        }
+        
         recognition.start();
         setIsRecording(true);
       } catch (e) {

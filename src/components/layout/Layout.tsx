@@ -3,6 +3,7 @@ import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { Outlet } from 'react-router-dom';
 import { PWAInstallPrompt } from './PWAInstallPrompt';
+import { AppointmentReminder } from '../AppointmentReminder';
 
 export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -16,6 +17,7 @@ export function Layout() {
           <Outlet />
         </main>
         <PWAInstallPrompt />
+        <AppointmentReminder />
         {/* Mobile overlay */}
         {sidebarOpen && (
           <div 
