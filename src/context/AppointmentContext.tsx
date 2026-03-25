@@ -139,7 +139,19 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
         .update({ status })
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        // If table doesn't exist, update locally
+        if (error.message.includes('not find the table') || error.code === '42P01' || id.startsWith('local-')) {
+          const localApts = JSON.parse(localStorage.getItem('local_appointments') || '[]');
+          const updatedLocal = localApts.map((a: any) => a.id === id ? { ...a, status } : a);
+          localStorage.setItem('local_appointments', JSON.stringify(updatedLocal));
+          
+          setAppointments(prev => prev.map(a => a.id === id ? { ...a, status } : a));
+          return;
+        }
+        throw error;
+      }
+      
       setAppointments(prev => prev.map(a => a.id === id ? { ...a, status } : a));
     } catch (e) {
       console.error('Error updating appointment status:', e);

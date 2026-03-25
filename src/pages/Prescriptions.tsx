@@ -184,7 +184,12 @@ export function Prescriptions() {
       const url = URL.createObjectURL(blob);
       
       const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
       iframe.src = url;
       document.body.appendChild(iframe);
       
@@ -194,12 +199,14 @@ export function Prescriptions() {
             iframe.contentWindow.focus();
             iframe.contentWindow.print();
           }
-          // Cleanup
+          // Cleanup after a longer delay to ensure print dialog opened
           setTimeout(() => {
-            document.body.removeChild(iframe);
+            if (document.body.contains(iframe)) {
+              document.body.removeChild(iframe);
+            }
             URL.revokeObjectURL(url);
-          }, 2000);
-        }, 500);
+          }, 60000);
+        }, 1000);
       };
     } catch (e) {
       console.error('Error triggering print:', e);

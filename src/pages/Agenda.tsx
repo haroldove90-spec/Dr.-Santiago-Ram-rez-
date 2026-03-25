@@ -297,8 +297,8 @@ export function Agenda() {
                 />
               </div>
               
-              <div className="mt-6 bg-white dark:bg-slate-50 rounded-xl shadow-sm border border-slate-200 dark:border-slate-300 p-4">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center">
+              <div className="mt-6 bg-white dark:bg-white rounded-xl shadow-sm border border-slate-200 dark:border-slate-200 p-4">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-900 mb-4 flex items-center">
                   <Clock className="h-4 w-4 mr-2 text-[#215732]" />
                   Citas para el {format(selectedDate, "d 'de' MMMM", { locale: es })}
                 </h3>
@@ -307,13 +307,13 @@ export function Agenda() {
                     .filter(apt => isSameDay(new Date(apt.date), selectedDate))
                     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                     .map(apt => (
-                      <div key={apt.id} className="flex items-center p-3 rounded-lg border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                      <div key={apt.id} className="flex items-center p-3 rounded-lg border border-slate-100 dark:border-slate-100 hover:bg-green-50 dark:hover:bg-green-50/50 transition-colors">
                         <div className="flex-shrink-0 w-12 text-center">
-                          <p className="text-xs font-bold text-[#215732] dark:text-green-400">{format(new Date(apt.date), 'HH:mm')}</p>
+                          <p className="text-xs font-bold text-[#215732] dark:text-[#215732]">{format(new Date(apt.date), 'HH:mm')}</p>
                         </div>
                         <div className="ml-3 flex-1">
-                          <p className="text-sm font-medium text-slate-900 dark:text-white">{apt.patientName}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">{apt.type}</p>
+                          <p className="text-sm font-medium text-slate-900 dark:text-slate-900">{apt.patientName}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-500">{apt.type}</p>
                         </div>
                         <div className={`h-2 w-2 rounded-full ${
                           apt.status === 'confirmed' ? 'bg-green-500' : 
@@ -330,7 +330,7 @@ export function Agenda() {
             </div>
 
             <div className="lg:col-span-2 space-y-4">
-              <div className="bg-white dark:bg-slate-50 rounded-xl shadow-sm border border-slate-200 dark:border-slate-300 p-6">
+              <div className="bg-white dark:bg-white rounded-xl shadow-sm border border-slate-200 dark:border-slate-200 p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-bold text-slate-900 dark:text-slate-900">Detalle de Citas</h2>
                   <span className="text-sm text-slate-500">{appointments.filter(apt => isSameDay(new Date(apt.date), selectedDate)).length} citas hoy</span>
@@ -341,19 +341,19 @@ export function Agenda() {
                     .filter(apt => isSameDay(new Date(apt.date), selectedDate))
                     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                     .map(apt => (
-                      <div key={apt.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:shadow-md transition-all gap-4">
+                      <div key={apt.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-200 hover:bg-green-50/30 hover:shadow-md transition-all gap-4">
                         <div className="flex items-center gap-4">
                           <div className="h-12 w-12 rounded-full bg-[#215732]/10 flex items-center justify-center text-[#215732] font-bold">
                             {apt.patientName.charAt(0)}
                           </div>
                           <div>
-                            <h4 className="text-base font-bold text-slate-900 dark:text-white">{apt.patientName}</h4>
+                            <h4 className="text-base font-bold text-slate-900 dark:text-slate-900">{apt.patientName}</h4>
                             <div className="flex items-center gap-3 mt-1">
-                              <span className="flex items-center text-xs text-slate-500 dark:text-slate-400">
+                              <span className="flex items-center text-xs text-slate-500 dark:text-slate-500">
                                 <Clock className="h-3 w-3 mr-1" />
                                 {format(new Date(apt.date), 'HH:mm')}
                               </span>
-                              <span className="flex items-center text-xs text-slate-500 dark:text-slate-400">
+                              <span className="flex items-center text-xs text-slate-500 dark:text-slate-500">
                                 <AlertCircle className="h-3 w-3 mr-1" />
                                 {apt.type}
                               </span>
@@ -422,10 +422,10 @@ export function Agenda() {
             </div>
           </div>
         ) : (
-          <div className="bg-white dark:bg-slate-50 rounded-xl shadow-sm border border-slate-200 dark:border-slate-300 overflow-hidden">
+          <div className="bg-white dark:bg-white rounded-xl shadow-sm border border-slate-200 dark:border-slate-200 overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-300">
-                <thead className="bg-slate-50 dark:bg-slate-100">
+              <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-200">
+                <thead className="bg-slate-50 dark:bg-slate-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-500 uppercase tracking-wider">Paciente</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-500 uppercase tracking-wider">Fecha y Hora</th>
@@ -434,9 +434,9 @@ export function Agenda() {
                     <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-500 uppercase tracking-wider">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-slate-50 divide-y divide-slate-200 dark:divide-slate-300">
+                <tbody className="bg-white dark:bg-white divide-y divide-slate-200 dark:divide-slate-200">
                   {filteredAppointments.map((apt) => (
-                    <tr key={apt.id} className="hover:bg-slate-50 dark:hover:bg-slate-100 transition-colors">
+                    <tr key={apt.id} className="hover:bg-green-50/50 dark:hover:bg-green-50/30 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-8 w-8 rounded-full bg-[#215732]/10 flex items-center justify-center text-[#215732] text-xs font-bold">
@@ -448,11 +448,11 @@ export function Agenda() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-slate-900 dark:text-white">{format(new Date(apt.date), 'dd/MM/yyyy')}</div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">{format(new Date(apt.date), 'HH:mm')}</div>
+                        <div className="text-sm text-slate-900 dark:text-slate-900">{format(new Date(apt.date), 'dd/MM/yyyy')}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-500">{format(new Date(apt.date), 'HH:mm')}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-slate-900 dark:text-white">{apt.type}</span>
+                        <span className="text-sm text-slate-900 dark:text-slate-900">{apt.type}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(apt.status)}`}>
